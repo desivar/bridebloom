@@ -1,23 +1,21 @@
 // C:\Users\jilli\bride\bridebloom\frontend\src\index.js
 
 import React from 'react';
-import ReactDOM from 'react-dom/client'; // This import is for React 18, which your project uses.
-import './index.css'; // This line imports your global CSS file, if you have one.
-import App from './'; // <-- This is crucial! It imports your main application component (App.js).
-import reportWebVitals from './reportWebVitals'; // This is optional, for performance metrics.
+import ReactDOM from 'react-dom/client'; // Required for React 18
+import './index.css'; // Link to your global CSS file (if you have one)
+import BrideBlooms from './BrideBlooms'; // <--- THIS IS THE CHANGE! It imports your main component by its new name.
+import reportWebVitals from './reportWebVitals'; // Optional: for performance metrics
 
-// Get the HTML element from public/index.html where your React app will be mounted.
-// It's typically a div with the id "root".
+// Get the root HTML element from public/index.html where your React app will be mounted
 const rootElement = document.getElementById('root');
 
-// Create a React "root" instance. This is the modern way to render React apps in React 18.
+// Create a React root using React 18's createRoot API
 const root = ReactDOM.createRoot(rootElement);
 
-// Render your main App component into the root.
-// <React.StrictMode> helps identify potential problems in your application during development.
+// Render your main application component into the root
 root.render(
   <React.StrictMode>
-    <App /> {/* This tells React to display the content defined in your App.js file! */}
+    <BrideBlooms /> {/* <--- THIS IS THE CHANGE! It renders your main component by its new name. */}
   </React.StrictMode>
 );
 
