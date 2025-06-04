@@ -4,21 +4,21 @@
   "private": true,
   "description": "React frontend for Bride Blooms flower shop",
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-router-dom": "^6.15.0",
-    "axios": "^1.5.0",
-    "lucide-react": "^0.263.1",
-    "tailwindcss": "^3.3.3",
-    "autoprefixer": "^10.4.15",
-    "postcss": "^8.4.28",
     "@headlessui/react": "^1.7.17",
     "@heroicons/react": "^2.0.18",
+    "autoprefixer": "^10.4.15",
+    "axios": "^1.5.0",
+    "date-fns": "^2.30.0",
     "framer-motion": "^10.16.4",
+    "lucide-react": "^0.263.1",
+    "postcss": "^8.4.28",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "react-hook-form": "^7.45.4",
-    "react-query": "^3.39.3",
     "react-hot-toast": "^2.4.1",
-    "date-fns": "^2.30.0"
+    "react-query": "^3.39.3",
+    "react-router-dom": "^6.15.0",
+    "tailwindcss": "^3.3.3"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -45,9 +45,9 @@
     ]
   },
   "devDependencies": {
-    "react-scripts": "5.0.1",
     "@types/react": "^18.2.21",
-    "@types/react-dom": "^18.2.7"
+    "@types/react-dom": "^18.2.7",
+    "react-scripts": "5.0.1"
   },
   "proxy": "http://localhost:5000"
 }
