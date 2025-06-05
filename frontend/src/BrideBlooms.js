@@ -209,7 +209,7 @@ const BrideBlooms = () => {
               Blooms Here
             </span>
           </h1>
-          <p className="text-xl md:text-2xl mb-8 text-gray-100 max-w-2xl mx-auto">
+          <p className="text-xl md:text-2xl mb-8 text-gray-900 max-w-2xl mx-auto">
             Perfect flowers for every season, guaranteed fresh and beautiful for your special day, 
             no matter the weather
           </p>
