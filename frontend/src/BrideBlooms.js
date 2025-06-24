@@ -501,7 +501,7 @@ const BrideBlooms = () => {
           </div>
           
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 Bride Blooms. All rights reserved. Making dreams bloom in every season.</p>
+            <p>&copy; 2025 Bride Blooms. All rights reserved. Making dreams bloom in every season. |Desire Vargas</p>
           </div>
         </div>
       </footer>
