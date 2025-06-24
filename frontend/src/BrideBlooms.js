@@ -20,13 +20,13 @@ const BrideBlooms = () => {
     ],
     fall: [
       { id: 7, name: 'Autumn Elegance', price: '$85', image: 'https://s-media-cache-ak0.pinimg.com/736x/ac/0c/18/ac0c1831e5627b38773ca68d8c995593.jpg' },
-      { id: 8, name: 'Mum Magnificence', price: '$60', image: 'https://images.unsplash.com/photo-1509587584298-0f3b3a3a1797?w=400&h=400&fit=crop' },
-      { id: 9, name: 'Dahlia Delight', price: '$80', image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=400&fit=crop' }
+      { id: 8, name: 'Mum Magnificence', price: '$60', image: 'https://th.bing.com/th/id/OIP.BfGN0IKQ7EfmOyVyKdZRmwHaLH?rs=1&pid=ImgDetMain&cb=idpwebpc2' },
+      { id: 9, name: 'Dahlia Delight', price: '$80', image: 'https://i.pinimg.com/originals/bb/62/96/bb629605ff6d55a6df63fe8d89eae66c.jpg' }
     ],
     winter: [
-      { id: 10, name: 'Winter White Wonder', price: '$99', image: 'https://images.unsplash.com/photo-1574781330855-d0db6cc7e3c2?w=400&h=400&fit=crop' },
-      { id: 11, name: 'Evergreen Elegance', price: '$110', image: 'https://images.unsplash.com/photo-1544886164-39b2e01dcd12?w=400&h=400&fit=crop' },
-      { id: 12, name: 'Poinsettia Paradise', price: '$65', image: 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=400&h=400&fit=crop' }
+      { id: 10, name: 'Winter White Wonder', price: '$99', image: 'https://www.thebridalflower.com/wp-content/uploads/2017/09/The-Bridal-Flower-5780-768x768.jpg' },
+      { id: 11, name: 'Evergreen Elegance', price: '$110', image: 'https://www.loveyouwedding.com/wp-content/uploads/2021/03/306-large-round-white-flowers-and-strings-of-green-leaves.jpg' },
+      { id: 12, name: 'Poinsettia Paradise', price: '$65', image: 'https://i.pinimg.com/originals/24/94/70/249470c8ffddf27ea875439e7dd056c2.jpg' }
     ]
   };
 
@@ -35,19 +35,19 @@ const BrideBlooms = () => {
       name: "Sarah Johnson",
       rating: 5,
       text: "Absolutely stunning flowers for my wedding! They had the perfect spring bouquet ready despite the unpredictable weather.",
-      image: "https://images.unsplash.com/photo-1494790108755-2616c04e8e36?w=80&h=80&fit=crop&crop=face"
+      image: "https://static.vecteezy.com/system/resources/previews/024/183/520/original/female-avatar-portrait-of-a-cute-brunette-woman-illustration-of-a-female-character-in-a-modern-color-style-vector.jpg"
     },
     {
       name: "Emily Chen", 
       rating: 5,
       text: "Their 4-season guarantee saved my winter wedding! Beautiful arrangements that looked fresh and vibrant.",
-      image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&crop=face"
+      image: "https://cdn.icon-icons.com/icons2/1736/PNG/512/4043247-1-avatar-female-portrait-woman_113261.png"
     },
     {
       name: "Maria Rodriguez",
       rating: 5,
       text: "Professional service and gorgeous flowers. They understood my vision perfectly and delivered beyond expectations.",
-      image: "https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=80&h=80&fit=crop&crop=face"
+      image: "https://static.vecteezy.com/system/resources/previews/004/773/704/original/a-girl-s-face-with-a-beautiful-smile-a-female-avatar-for-a-website-and-social-network-vector.jpg"
     }
   ];
 
