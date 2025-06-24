@@ -16,10 +16,10 @@ const BrideBlooms = () => {
     summer: [
       { id: 4, name: 'Sunflower Splendor', price: '$75', image: 'https://cdn11.bigcommerce.com/s-0023c/images/stencil/1280w/products/2483/7882/IMG20230718114054_002__20230.1689645075.jpg?c=2' },
       { id: 5, name: 'Peony Perfection', price: '$95', image: 'https://th.bing.com/th/id/R.8b8e78c05ffc5d277a86eb41253d6f00?rik=C38d9T6ag9etKg&riu=http%3a%2f%2fassets.marthastewartweddings.com%2fstyles%2fwmax-520-highdpi%2fd44%2fmemree-rich-wedding-bouquet-234-6257086-0217%2fmemree-rich-wedding-bouquet-234-6257086-0217_vert.jpg%3fitok%3dpE7WLQko&ehk=f2gwG8rz%2bHp2gZztlCSIX9qBQPxsw%2bOQZT97nGvQuKs%3d&risl=&pid=ImgRaw&r=0' },
-      { id: 6, name: 'Lavender Love', price: '$70', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop' }
+      { id: 6, name: 'Lavender Love', price: '$70', image: 'https://i5.walmartimages.com/seo/Ludlz-Artificial-Lavender-Plant-Silk-Flowers-Wedding-Decor-Table-Centerpieces-1Pc-Flower-Garden-DIY-Party-Home-Craft_488c866c-6391-4305-ac63-5860e99f349f.c4fdce3aac39fddd73fe164d964e4bff.jpeg?odnHeight=640&odnWidth=640&odnBg=FFFFFF' }
     ],
     fall: [
-      { id: 7, name: 'Autumn Elegance', price: '$85', image: 'https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=400&h=400&fit=crop' },
+      { id: 7, name: 'Autumn Elegance', price: '$85', image: 'https://s-media-cache-ak0.pinimg.com/736x/ac/0c/18/ac0c1831e5627b38773ca68d8c995593.jpg' },
       { id: 8, name: 'Mum Magnificence', price: '$60', image: 'https://images.unsplash.com/photo-1509587584298-0f3b3a3a1797?w=400&h=400&fit=crop' },
       { id: 9, name: 'Dahlia Delight', price: '$80', image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=400&fit=crop' }
     ],
