@@ -7,7 +7,7 @@ const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5500;
 
 // Middleware
 app.use(express.json());
@@ -30,7 +30,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: 'http://localhost:5000',
+        url: 'http://localhost:5500',
         description: 'Development server',
       },
     ],

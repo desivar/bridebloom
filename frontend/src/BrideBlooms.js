@@ -9,13 +9,13 @@ const BrideBlooms = () => {
   // Sample data for flowers by season
   const flowersBySeasonData = {
     spring: [
-      { id: 1, name: 'Cherry Blossom Bouquet', price: '$89', image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=400&fit=crop' },
-      { id: 2, name: 'Tulip Paradise', price: '$65', image: 'https://images.unsplash.com/photo-1520637736862-4d197d17c90a?w=400&h=400&fit=crop' },
-      { id: 3, name: 'Daffodil Dreams', price: '$55', image: 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=400&h=400&fit=crop' }
+      { id: 1, name: 'Cherry Blossom Bouquet', price: '$89', image: 'https://i.pinimg.com/originals/3a/bf/ca/3abfcac4c97f8ea9be6ebaff99a696a8.jpg' },
+      { id: 2, name: 'Tulip Paradise', price: '$65', image: 'https://th.bing.com/th/id/R.f4f5a894e331e2b0b1306df7f5d09cce?rik=xNn50e%2f1mu6URg&riu=http%3a%2f%2fwww.himisspuff.com%2fwp-content%2fuploads%2f2017%2f01%2fWhite-tulip-wedding-bouquets.jpg&ehk=fZQt8xwgN3UJEL5O%2ftsY9nlZ2qFtB72d9vGHY%2f0G1HA%3d&risl=&pid=ImgRaw&r=0' },
+      { id: 3, name: 'Daffodil Dreams', price: '$55', image: 'https://www.katherinesflorists.co.uk/wp-content/uploads/2020/03/daffodils-900x1200.jpg' }
     ],
     summer: [
-      { id: 4, name: 'Sunflower Splendor', price: '$75', image: 'https://images.unsplash.com/photo-1597848212624-e8877c225bb1?w=400&h=400&fit=crop' },
-      { id: 5, name: 'Peony Perfection', price: '$95', image: 'https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?w=400&h=400&fit=crop' },
+      { id: 4, name: 'Sunflower Splendor', price: '$75', image: 'https://cdn11.bigcommerce.com/s-0023c/images/stencil/1280w/products/2483/7882/IMG20230718114054_002__20230.1689645075.jpg?c=2' },
+      { id: 5, name: 'Peony Perfection', price: '$95', image: 'https://th.bing.com/th/id/R.8b8e78c05ffc5d277a86eb41253d6f00?rik=C38d9T6ag9etKg&riu=http%3a%2f%2fassets.marthastewartweddings.com%2fstyles%2fwmax-520-highdpi%2fd44%2fmemree-rich-wedding-bouquet-234-6257086-0217%2fmemree-rich-wedding-bouquet-234-6257086-0217_vert.jpg%3fitok%3dpE7WLQko&ehk=f2gwG8rz%2bHp2gZztlCSIX9qBQPxsw%2bOQZT97nGvQuKs%3d&risl=&pid=ImgRaw&r=0' },
       { id: 6, name: 'Lavender Love', price: '$70', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop' }
     ],
     fall: [
