@@ -198,7 +198,7 @@ const BrideBlooms = () => {
         <div 
           className="absolute inset-0 bg-cover bg-center transition-all duration-1000"
           style={{
-            backgroundImage: 'url("https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=1920&h=1080&fit=crop")'
+            backgroundImage: 'url("https://50gramwedding.com/wp-content/uploads/2023/05/Wedding-2-9.png")'
           }}
         ></div>
         
