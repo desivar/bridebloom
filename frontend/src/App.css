@@ -36,3 +36,50 @@
     transform: rotate(360deg);
   }
 }
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+  body {
+    @apply bg-gradient-to-br from-bride-peach via-bride-cream to-bride-peach font-montserrat;
+  }
+  h1, h2, h3, h4 {
+    @apply font-playfair;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-gradient-to-r from-bride-pink to-bride-rose text-white px-6 py-3 rounded-full font-medium hover:from-bride-mauve hover:to-bride-pink transition-all duration-300 shadow-lg hover:shadow-xl;
+  }
+  
+  .flower-card {
+    @apply bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:transform hover:-translate-y-1;
+  }
+  
+  .nav-link {
+    @apply text-gray-700 hover:text-bride-pink transition-colors duration-200 relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-bride-pink hover:after:w-full after:transition-all after:duration-300;
+  }
+}
+
+/* Custom animations */
+.animate-fade-in {
+  animation: fadeIn 1.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.flower-hover-effect {
+  transition: transform 0.5s ease, box-shadow 0.3s ease;
+}
+
+.flower-hover-effect:hover {
+  transform: scale(1.03);
+}

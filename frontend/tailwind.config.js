@@ -12,3 +12,33 @@ module.exports = {
   plugins: [], // Add any Tailwind plugins here
 }
 
+// tailwind.config.js
+module.exports = {
+  content: [
+    "./src/**/*.{js,jsx,ts,tsx}",
+    "./public/index.html"
+  ],
+  theme: {
+    extend: {
+      colors: {
+        'bride-pink': '#ff6b8b',
+        'bride-rose': '#ff4d6d',
+        'bride-mauve': '#c9184a',
+        'bride-peach': '#ffddd2',
+        'bride-cream': '#fff1e6',
+      },
+      fontFamily: {
+        'playfair': ['"Playfair Display"', 'serif'],
+        'montserrat': ['Montserrat', 'sans-serif'],
+      },
+      backgroundImage: {
+        'hero-pattern': "url('https://50gramwedding.com/wp-content/uploads/2023/05/Wedding-2-9.png')",
+        'flower-texture': "url('https://www.transparenttextures.com/patterns/floral.png')",
+      }
+    },
+  },
+  plugins: [
+    require('@tailwindcss/forms'),
+    require('@tailwindcss/typography'),
+  ],
+}
