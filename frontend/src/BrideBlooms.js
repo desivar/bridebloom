@@ -205,7 +205,7 @@ const BrideBlooms = () => {
         <div className="relative z-10 text-center text-white max-w-4xl mx-auto px-4">
           <h1 className="text-5xl md:text-7xl font-bold mb-6 animate-fade-in">
             Your Dream Wedding
-            <span className="block bg-gradient-to-r from-pink-300 to-rose-300 bg-clip-text text-transparent">
+            <span className="block bg-gradient-to-r from-black-300 to-blue-300 bg-clip-text text-transparent">
               Blooms Here
             </span>
           </h1>
