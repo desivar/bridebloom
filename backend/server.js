@@ -7,7 +7,7 @@ const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5500;
 
 // Middleware
 app.use(express.json());
@@ -30,7 +30,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: 'http://localhost:5000',
+        url: 'http://localhost:5500',
         description: 'Development server',
       },
     ],
@@ -400,7 +400,7 @@ const initializeData = async () => {
           season: 'all-season',
           color: ['red', 'pink'],
           category: 'bouquet',
-          imageUrl: 'https://images.unsplash.com/photo-1574781330855-d0db6cc7e3c2?w=500',
+          imageUrl: 'https://img.freepik.com/premium-psd/red-roses-wedding-arrangement_176841-58423.jpg',
           popularity: 95
         },
         {
@@ -410,7 +410,7 @@ const initializeData = async () => {
           season: 'spring',
           color: ['pink', 'yellow', 'purple'],
           category: 'centerpiece',
-          imageUrl: 'https://images.unsplash.com/photo-1520637836862-4d197d17c90a?w=500',
+          imageUrl: 'https://th.bing.com/th/id/OIP.-mjdzxOQeE5rVwmeoGynUwAAAA?rs=1&pid=ImgDetMain&cb=idpwebpc2',
           popularity: 85
         },
         {
@@ -420,7 +420,7 @@ const initializeData = async () => {
           season: 'all-season',
           color: ['white'],
           category: 'ceremony',
-          imageUrl: 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=500',
+          imageUrl: 'https://i.pinimg.com/736x/10/74/fc/1074fc613d14895c5d2f0714ce64b97d.jpg',
           popularity: 90
         }
       ];

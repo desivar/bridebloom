@@ -9,6 +9,5 @@ module.exports = {
   theme: {
     extend: {}, // This is where you can customize Tailwind's default theme (colors, fonts, etc.)
   },
-  plugins: [], // Add any Tailwind plugins here
+  plugins: [],
 }
-

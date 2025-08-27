@@ -9,24 +9,24 @@ const BrideBlooms = () => {
   // Sample data for flowers by season
   const flowersBySeasonData = {
     spring: [
-      { id: 1, name: 'Cherry Blossom Bouquet', price: '$89', image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=400&fit=crop' },
-      { id: 2, name: 'Tulip Paradise', price: '$65', image: 'https://images.unsplash.com/photo-1520637736862-4d197d17c90a?w=400&h=400&fit=crop' },
-      { id: 3, name: 'Daffodil Dreams', price: '$55', image: 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=400&h=400&fit=crop' }
+      { id: 1, name: 'Cherry Blossom Bouquet', price: '$89', image: 'https://i.pinimg.com/originals/3a/bf/ca/3abfcac4c97f8ea9be6ebaff99a696a8.jpg' },
+      { id: 2, name: 'Tulip Paradise', price: '$65', image: 'https://th.bing.com/th/id/R.f4f5a894e331e2b0b1306df7f5d09cce?rik=xNn50e%2f1mu6URg&riu=http%3a%2f%2fwww.himisspuff.com%2fwp-content%2fuploads%2f2017%2f01%2fWhite-tulip-wedding-bouquets.jpg&ehk=fZQt8xwgN3UJEL5O%2ftsY9nlZ2qFtB72d9vGHY%2f0G1HA%3d&risl=&pid=ImgRaw&r=0' },
+      { id: 3, name: 'Daffodil Dreams', price: '$55', image: 'https://www.katherinesflorists.co.uk/wp-content/uploads/2020/03/daffodils-900x1200.jpg' }
     ],
     summer: [
-      { id: 4, name: 'Sunflower Splendor', price: '$75', image: 'https://images.unsplash.com/photo-1597848212624-e8877c225bb1?w=400&h=400&fit=crop' },
-      { id: 5, name: 'Peony Perfection', price: '$95', image: 'https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?w=400&h=400&fit=crop' },
-      { id: 6, name: 'Lavender Love', price: '$70', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop' }
+      { id: 4, name: 'Sunflower Splendor', price: '$75', image: 'https://cdn11.bigcommerce.com/s-0023c/images/stencil/1280w/products/2483/7882/IMG20230718114054_002__20230.1689645075.jpg?c=2' },
+      { id: 5, name: 'Peony Perfection', price: '$95', image: 'https://th.bing.com/th/id/R.8b8e78c05ffc5d277a86eb41253d6f00?rik=C38d9T6ag9etKg&riu=http%3a%2f%2fassets.marthastewartweddings.com%2fstyles%2fwmax-520-highdpi%2fd44%2fmemree-rich-wedding-bouquet-234-6257086-0217%2fmemree-rich-wedding-bouquet-234-6257086-0217_vert.jpg%3fitok%3dpE7WLQko&ehk=f2gwG8rz%2bHp2gZztlCSIX9qBQPxsw%2bOQZT97nGvQuKs%3d&risl=&pid=ImgRaw&r=0' },
+      { id: 6, name: 'Lavender Love', price: '$70', image: 'https://i5.walmartimages.com/seo/Ludlz-Artificial-Lavender-Plant-Silk-Flowers-Wedding-Decor-Table-Centerpieces-1Pc-Flower-Garden-DIY-Party-Home-Craft_488c866c-6391-4305-ac63-5860e99f349f.c4fdce3aac39fddd73fe164d964e4bff.jpeg?odnHeight=640&odnWidth=640&odnBg=FFFFFF' }
     ],
     fall: [
-      { id: 7, name: 'Autumn Elegance', price: '$85', image: 'https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=400&h=400&fit=crop' },
-      { id: 8, name: 'Mum Magnificence', price: '$60', image: 'https://images.unsplash.com/photo-1509587584298-0f3b3a3a1797?w=400&h=400&fit=crop' },
-      { id: 9, name: 'Dahlia Delight', price: '$80', image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=400&fit=crop' }
+      { id: 7, name: 'Autumn Elegance', price: '$85', image: 'https://s-media-cache-ak0.pinimg.com/736x/ac/0c/18/ac0c1831e5627b38773ca68d8c995593.jpg' },
+      { id: 8, name: 'Mum Magnificence', price: '$60', image: 'https://th.bing.com/th/id/OIP.BfGN0IKQ7EfmOyVyKdZRmwHaLH?rs=1&pid=ImgDetMain&cb=idpwebpc2' },
+      { id: 9, name: 'Dahlia Delight', price: '$80', image: 'https://i.pinimg.com/originals/bb/62/96/bb629605ff6d55a6df63fe8d89eae66c.jpg' }
     ],
     winter: [
-      { id: 10, name: 'Winter White Wonder', price: '$99', image: 'https://images.unsplash.com/photo-1574781330855-d0db6cc7e3c2?w=400&h=400&fit=crop' },
-      { id: 11, name: 'Evergreen Elegance', price: '$110', image: 'https://images.unsplash.com/photo-1544886164-39b2e01dcd12?w=400&h=400&fit=crop' },
-      { id: 12, name: 'Poinsettia Paradise', price: '$65', image: 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=400&h=400&fit=crop' }
+      { id: 10, name: 'Winter White Wonder', price: '$99', image: 'https://www.thebridalflower.com/wp-content/uploads/2017/09/The-Bridal-Flower-5780-768x768.jpg' },
+      { id: 11, name: 'Evergreen Elegance', price: '$110', image: 'https://www.loveyouwedding.com/wp-content/uploads/2021/03/306-large-round-white-flowers-and-strings-of-green-leaves.jpg' },
+      { id: 12, name: 'Poinsettia Paradise', price: '$65', image: 'https://i.pinimg.com/originals/24/94/70/249470c8ffddf27ea875439e7dd056c2.jpg' }
     ]
   };
 
@@ -35,19 +35,19 @@ const BrideBlooms = () => {
       name: "Sarah Johnson",
       rating: 5,
       text: "Absolutely stunning flowers for my wedding! They had the perfect spring bouquet ready despite the unpredictable weather.",
-      image: "https://images.unsplash.com/photo-1494790108755-2616c04e8e36?w=80&h=80&fit=crop&crop=face"
+      image: "https://static.vecteezy.com/system/resources/previews/024/183/520/original/female-avatar-portrait-of-a-cute-brunette-woman-illustration-of-a-female-character-in-a-modern-color-style-vector.jpg"
     },
     {
       name: "Emily Chen", 
       rating: 5,
       text: "Their 4-season guarantee saved my winter wedding! Beautiful arrangements that looked fresh and vibrant.",
-      image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&crop=face"
+      image: "https://cdn.icon-icons.com/icons2/1736/PNG/512/4043247-1-avatar-female-portrait-woman_113261.png"
     },
     {
       name: "Maria Rodriguez",
       rating: 5,
       text: "Professional service and gorgeous flowers. They understood my vision perfectly and delivered beyond expectations.",
-      image: "https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=80&h=80&fit=crop&crop=face"
+      image: "https://static.vecteezy.com/system/resources/previews/004/773/704/original/a-girl-s-face-with-a-beautiful-smile-a-female-avatar-for-a-website-and-social-network-vector.jpg"
     }
   ];
 
@@ -198,14 +198,14 @@ const BrideBlooms = () => {
         <div 
           className="absolute inset-0 bg-cover bg-center transition-all duration-1000"
           style={{
-            backgroundImage: 'url("https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=1920&h=1080&fit=crop")'
+            backgroundImage: 'url("https://50gramwedding.com/wp-content/uploads/2023/05/Wedding-2-9.png")'
           }}
         ></div>
         
         <div className="relative z-10 text-center text-white max-w-4xl mx-auto px-4">
           <h1 className="text-5xl md:text-7xl font-bold mb-6 animate-fade-in">
             Your Dream Wedding
-            <span className="block bg-gradient-to-r from-pink-300 to-rose-300 bg-clip-text text-transparent">
+            <span className="block bg-gradient-to-r from-black-300 to-blue-300 bg-clip-text text-transparent">
               Blooms Here
             </span>
           </h1>
@@ -501,7 +501,7 @@ const BrideBlooms = () => {
           </div>
           
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 Bride Blooms. All rights reserved. Making dreams bloom in every season.</p>
+            <p>&copy; 2025 Bride Blooms. All rights reserved. Making dreams bloom in every season. |Desire Vargas</p>
           </div>
         </div>
       </footer>
