@@ -1,5 +1,5 @@
 # Bride Blooms - Wedding Flower Shop
-![Img](image-url)
+![Img](https://github.com/desivar/Portfolio/blob/main/images/bridepro.png)
 [Watch the demo](https://user-images.githubusercontent.com/your-video.mp4)
 
 
