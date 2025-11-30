@@ -1,6 +1,6 @@
 // C:\Users\jilli\bride\bridebloom\frontend\src\api.js
-// This is the code you provided multiple times, starting with import axios from 'axios';
-// PASTE IT ALL HERE.
+
+
 import axios from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5500';
