@@ -159,17 +159,7 @@ const BrideBlooms = () => {
                 <button className="text-gray-700 hover:text-pink-600 transition-colors">
                   <ShoppingCart size={20} />
                 </button>
-                
-                <button 
-                  onClick={() => setShowLogin(true)} // This line opens the modal
-                  className="flex items-center space-x-2 bg-gradient-to-r from-pink-500 to-rose-500 text-white px-4 py-2 rounded-full hover:from-pink-600 hover:to-rose-600 transition-all"
-                >
-                  <User size={16} />
-                  <span>Sign In</span>
-                </button>
-                
-              </div>
-            </div>
+              
               
 
             <button 
