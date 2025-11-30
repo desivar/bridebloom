@@ -147,6 +147,7 @@ const BrideBlooms = () => {
                 Bride Blooms
               </span>
             </div>
+
             
             <div className="hidden md:flex items-center space-x-8">
               <a href="#home" className="text-gray-700 hover:text-pink-600 transition-colors">Home</a>
@@ -160,7 +161,6 @@ const BrideBlooms = () => {
                   <ShoppingCart size={20} />
                 </button>
               
-              
 
             <button 
               className="md:hidden"
@@ -170,6 +170,7 @@ const BrideBlooms = () => {
             </button>
           </div>
         </div>
+      </div>
       </div>
         
       </nav>
