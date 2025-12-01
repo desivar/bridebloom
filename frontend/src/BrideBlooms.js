@@ -1,10 +1,78 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, Star, Calendar, MapPin, Phone, Mail, Menu, X, ShoppingCart, User } from 'lucide-react';
+import { Heart, Star, Calendar, MapPin, Phone, Mail, Menu, X, ShoppingCart, User, LogOut, Trash2 } from 'lucide-react';
+
+// Mock API functions (replace with your actual API imports)
+const authAPI = {
+  login: async (credentials) => {
+    // Simulate API call
+    return { token: 'mock-token', user: { name: credentials.email.split('@')[0], email: credentials.email } };
+  },
+  register: async (userData) => {
+    return { token: 'mock-token', user: { name: userData.name, email: userData.email } };
+  },
+  logout: () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+  }
+};
+
+const cartAPI = {
+  getCart: () => {
+    const cart = localStorage.getItem('cart');
+    return cart ? JSON.parse(cart) : [];
+  },
+  addToCart: (item) => {
+    const cart = cartAPI.getCart();
+    const existingItem = cart.find(cartItem => cartItem.id === item.id);
+    if (existingItem) {
+      existingItem.quantity += 1;
+    } else {
+      cart.push({ ...item, quantity: 1 });
+    }
+    localStorage.setItem('cart', JSON.stringify(cart));
+    return cart;
+  },
+  removeFromCart: (itemId) => {
+    const cart = cartAPI.getCart();
+    const updatedCart = cart.filter(item => item.id !== itemId);
+    localStorage.setItem('cart', JSON.stringify(updatedCart));
+    return updatedCart;
+  },
+  clearCart: () => {
+    localStorage.removeItem('cart');
+    return [];
+  },
+  getCartItemCount: () => {
+    const cart = cartAPI.getCart();
+    return cart.reduce((count, item) => count + item.quantity, 0);
+  },
+  getCartTotal: () => {
+    const cart = cartAPI.getCart();
+    return cart.reduce((total, item) => {
+      const price = parseFloat(item.price.replace('$', ''));
+      return total + (price * item.quantity);
+    }, 0);
+  }
+};
+
+const consultationAPI = {
+  schedule: async (data) => {
+    // Simulate API call
+    return { success: true, message: 'Consultation scheduled successfully!' };
+  }
+};
 
 const BrideBlooms = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [currentSeason, setCurrentSeason] = useState('spring');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState(null);
+  const [showLogin, setShowLogin] = useState(false);
+  const [showCart, setShowCart] = useState(false);
+  const [cart, setCart] = useState([]);
+  const [cartCount, setCartCount] = useState(0);
+  const [favorites, setFavorites] = useState([]);
+  const [notification, setNotification] = useState(null);
 
   // Sample data for flowers by season
   const flowersBySeasonData = {
@@ -51,6 +119,18 @@ const BrideBlooms = () => {
     }
   ];
 
+  // Load user and cart on mount
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const savedUser = localStorage.getItem('user');
+    if (token && savedUser) {
+      setIsLoggedIn(true);
+      setUser(JSON.parse(savedUser));
+    }
+    updateCartCount();
+  }, []);
+
+  // Season rotation
   useEffect(() => {
     const seasons = ['spring', 'summer', 'fall', 'winter'];
     const interval = setInterval(() => {
@@ -62,10 +142,82 @@ const BrideBlooms = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const showNotification = (message, type = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 3000);
+  };
+
+  const updateCartCount = () => {
+    setCartCount(cartAPI.getCartItemCount());
+    setCart(cartAPI.getCart());
+  };
+
+  const handleAddToCart = (flower) => {
+    cartAPI.addToCart(flower);
+    updateCartCount();
+    showNotification(`${flower.name} added to cart!`);
+  };
+
+  const handleRemoveFromCart = (itemId) => {
+    cartAPI.removeFromCart(itemId);
+    updateCartCount();
+    showNotification('Item removed from cart');
+  };
+
+  const toggleFavorite = (flowerId) => {
+    setFavorites(prev => {
+      if (prev.includes(flowerId)) {
+        return prev.filter(id => id !== flowerId);
+      } else {
+        showNotification('Added to favorites!');
+        return [...prev, flowerId];
+      }
+    });
+  };
+
+  const handleLogout = () => {
+    authAPI.logout();
+    setIsLoggedIn(false);
+    setUser(null);
+    showNotification('Logged out successfully');
+  };
+
   const LoginModal = ({ isOpen, onClose }) => {
     const [isLogin, setIsLogin] = useState(true);
+    const [formData, setFormData] = useState({
+      name: '',
+      email: '',
+      password: '',
+      weddingDate: ''
+    });
+    const [loading, setLoading] = useState(false);
     
     if (!isOpen) return null;
+
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+      setLoading(true);
+
+      try {
+        let response;
+        if (isLogin) {
+          response = await authAPI.login({ email: formData.email, password: formData.password });
+        } else {
+          response = await authAPI.register(formData);
+        }
+
+        localStorage.setItem('token', response.token);
+        localStorage.setItem('user', JSON.stringify(response.user));
+        setIsLoggedIn(true);
+        setUser(response.user);
+        showNotification(`Welcome ${response.user.name}!`);
+        onClose();
+      } catch (error) {
+        showNotification('Authentication failed. Please try again.', 'error');
+      } finally {
+        setLoading(false);
+      }
+    };
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -86,37 +238,49 @@ const BrideBlooms = () => {
             </p>
           </div>
 
-          <form className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {!isLogin && (
               <input
                 type="text"
                 placeholder="Full Name"
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                required={!isLogin}
               />
             )}
             <input
               type="email"
               placeholder="Email Address"
+              value={formData.email}
+              onChange={(e) => setFormData({...formData, email: e.target.value})}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+              required
             />
             <input
               type="password"
               placeholder="Password"
+              value={formData.password}
+              onChange={(e) => setFormData({...formData, password: e.target.value})}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+              required
             />
             {!isLogin && (
               <input
                 type="date"
                 placeholder="Wedding Date"
+                value={formData.weddingDate}
+                onChange={(e) => setFormData({...formData, weddingDate: e.target.value})}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
               />
             )}
             
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white py-3 rounded-lg font-semibold hover:from-pink-600 hover:to-rose-600 transition-all"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white py-3 rounded-lg font-semibold hover:from-pink-600 hover:to-rose-600 transition-all disabled:opacity-50"
             >
-              {isLogin ? 'Sign In' : 'Create Account'}
+              {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Create Account')}
             </button>
           </form>
 
@@ -133,10 +297,77 @@ const BrideBlooms = () => {
     );
   };
 
-  const [showLogin, setShowLogin] = useState(false);
+  const CartModal = ({ isOpen, onClose }) => {
+    if (!isOpen) return null;
+
+    const total = cartAPI.getCartTotal();
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl max-w-2xl w-full p-8 relative max-h-[90vh] overflow-y-auto">
+          <button 
+            onClick={onClose}
+            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+          >
+            <X size={24} />
+          </button>
+          
+          <h2 className="text-3xl font-bold text-gray-800 mb-6">Shopping Cart</h2>
+
+          {cart.length === 0 ? (
+            <div className="text-center py-12">
+              <ShoppingCart size={64} className="mx-auto text-gray-300 mb-4" />
+              <p className="text-gray-500 text-lg">Your cart is empty</p>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-4 mb-6">
+                {cart.map((item) => (
+                  <div key={item.id} className="flex items-center gap-4 bg-pink-50 p-4 rounded-lg">
+                    <img src={item.image} alt={item.name} className="w-20 h-20 object-cover rounded-lg" />
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-800">{item.name}</h3>
+                      <p className="text-pink-600 font-bold">{item.price}</p>
+                      <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
+                    </div>
+                    <button
+                      onClick={() => handleRemoveFromCart(item.id)}
+                      className="text-red-500 hover:text-red-700 transition-colors"
+                    >
+                      <Trash2 size={20} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <div className="border-t pt-4">
+                <div className="flex justify-between items-center mb-4">
+                  <span className="text-xl font-bold text-gray-800">Total:</span>
+                  <span className="text-2xl font-bold text-pink-600">${total.toFixed(2)}</span>
+                </div>
+                <button className="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white py-3 rounded-lg font-semibold hover:from-pink-600 hover:to-rose-600 transition-all">
+                  Proceed to Checkout
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-rose-50">
+      {/* Notification Toast */}
+      {notification && (
+        <div className={`fixed top-20 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${
+          notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'
+        } text-white animate-fade-in`}>
+          {notification.message}
+        </div>
+      
+      )}
+
       {/* Navigation */}
       <nav className="bg-white/80 backdrop-blur-md shadow-lg sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -148,19 +379,47 @@ const BrideBlooms = () => {
               </span>
             </div>
 
-            
             <div className="hidden md:flex items-center space-x-8">
               <a href="#home" className="text-gray-700 hover:text-pink-600 transition-colors">Home</a>
               <a href="#flowers" className="text-gray-700 hover:text-pink-600 transition-colors">Flowers</a>
-              <a href="#seasons" className="text-gray-700 hover:text-pink-600 transition-colors">4 Seasons</a>
+              <a href="#flowers" className="text-gray-700 hover:text-pink-600 transition-colors">4 Seasons</a>
               <a href="#testimonials" className="text-gray-700 hover:text-pink-600 transition-colors">Reviews</a>
               <a href="#contact" className="text-gray-700 hover:text-pink-600 transition-colors">Contact</a>
               
               <div className="flex items-center space-x-4">
-                <button className="text-gray-700 hover:text-pink-600 transition-colors">
+                <button 
+                  onClick={() => setShowCart(true)}
+                  className="text-gray-700 hover:text-pink-600 transition-colors relative"
+                >
                   <ShoppingCart size={20} />
+                  {cartCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-pink-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      {cartCount}
+                    </span>
+                  )}
                 </button>
-              
+                
+                {isLoggedIn ? (
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-gray-700">Hi, {user?.name}</span>
+                    <button 
+                      onClick={handleLogout}
+                      className="text-gray-700 hover:text-pink-600 transition-colors"
+                      title="Logout"
+                    >
+                      <LogOut size={20} />
+                    </button>
+                  </div>
+                ) : (
+                  <button 
+                    onClick={() => setShowLogin(true)}
+                    className="text-gray-700 hover:text-pink-600 transition-colors"
+                  >
+                    <User size={20} />
+                  </button>
+                )}
+              </div>
+            </div>
 
             <button 
               className="md:hidden"
@@ -170,9 +429,6 @@ const BrideBlooms = () => {
             </button>
           </div>
         </div>
-      </div>
-      </div>
-        
       </nav>
 
       {/* Mobile Menu */}
@@ -181,7 +437,7 @@ const BrideBlooms = () => {
           <div className="px-2 pt-2 pb-3 space-y-1">
             <a href="#home" className="block px-3 py-2 text-gray-700">Home</a>
             <a href="#flowers" className="block px-3 py-2 text-gray-700">Flowers</a>
-            <a href="#seasons" className="block px-3 py-2 text-gray-700">4 Seasons</a>
+            <a href="#flowers" className="block px-3 py-2 text-gray-700">4 Seasons</a>
             <a href="#testimonials" className="block px-3 py-2 text-gray-700">Reviews</a>
             <a href="#contact" className="block px-3 py-2 text-gray-700">Contact</a>
           </div>
@@ -210,18 +466,24 @@ const BrideBlooms = () => {
             no matter the weather
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="bg-gradient-to-r from-pink-500 to-rose-500 text-white px-8 py-4 rounded-full text-lg font-semibold hover:from-pink-600 hover:to-rose-600 transform hover:scale-105 transition-all shadow-xl">
+            <a 
+              href="#flowers"
+              className="bg-gradient-to-r from-pink-500 to-rose-500 text-white px-8 py-4 rounded-full text-lg font-semibold hover:from-pink-600 hover:to-rose-600 transform hover:scale-105 transition-all shadow-xl text-center"
+            >
               Browse Collections
-            </button>
-            <button className="bg-white/20 backdrop-blur-md text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-white/30 transition-all border border-white/30">
+            </a>
+            <a 
+              href="#contact"
+              className="bg-white/20 backdrop-blur-md text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-white/30 transition-all border border-white/30 text-center"
+            >
               Schedule Consultation
-            </button>
+            </a>
           </div>
         </div>
       </section>
 
       {/* 4 Seasons Guarantee */}
-      <section id="seasons" className="py-20 bg-white">
+      <section id="flowers" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6">
@@ -237,7 +499,7 @@ const BrideBlooms = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
-            {['spring', 'summer', 'fall', 'winter'].map((season, index) => (
+            {['spring', 'summer', 'fall', 'winter'].map((season) => (
               <div 
                 key={season}
                 className={`relative rounded-2xl p-6 text-center transform transition-all duration-500 cursor-pointer ${
@@ -284,15 +546,24 @@ const BrideBlooms = () => {
                     className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all"></div>
-                  <button className="absolute top-4 right-4 bg-white/80 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 transition-all">
-                    <Heart size={20} className="text-pink-500" />
+                  <button 
+                    onClick={() => toggleFavorite(flower.id)}
+                    className="absolute top-4 right-4 bg-white/80 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 transition-all"
+                  >
+                    <Heart 
+                      size={20} 
+                      className={`${favorites.includes(flower.id) ? 'text-pink-500 fill-current' : 'text-pink-500'}`}
+                    />
                   </button>
                 </div>
                 <div className="p-6">
                   <h3 className="text-xl font-bold text-gray-800 mb-2">{flower.name}</h3>
                   <div className="flex justify-between items-center">
                     <span className="text-2xl font-bold text-pink-600">{flower.price}</span>
-                    <button className="bg-gradient-to-r from-pink-500 to-rose-500 text-white px-4 py-2 rounded-full hover:from-pink-600 hover:to-rose-600 transition-all">
+                    <button 
+                      onClick={() => handleAddToCart(flower)}
+                      className="bg-gradient-to-r from-pink-500 to-rose-500 text-white px-4 py-2 rounded-full hover:from-pink-600 hover:to-rose-600 transition-all"
+                    >
                       Add to Cart
                     </button>
                   </div>
@@ -301,213 +572,3 @@ const BrideBlooms = () => {
             ))}
           </div>
         </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-20 bg-gradient-to-br from-pink-50 to-rose-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-800 mb-6">Why Choose Bride Blooms?</h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              We go above and beyond to make your wedding day perfect
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all text-center">
-              <div className="bg-gradient-to-r from-pink-500 to-rose-500 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Calendar className="text-white" size={32} />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-4">4-Season Guarantee</h3>
-              <p className="text-gray-600">
-                Rain or shine, snow or heat - we guarantee fresh, beautiful flowers for your special day, 
-                with backup arrangements ready for any weather condition.
-              </p>
-            </div>
-
-            <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all text-center">
-              <div className="bg-gradient-to-r from-green-500 to-emerald-500 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Heart className="text-white" size={32} />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-4">Personalized Service</h3>
-              <p className="text-gray-600">
-                Every bride is unique. We work closely with you to understand your vision and create 
-                custom arrangements that perfectly match your dream wedding.
-              </p>
-            </div>
-
-            <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all text-center">
-              <div className="bg-gradient-to-r from-purple-500 to-indigo-500 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Star className="text-white" size={32} />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-4">Premium Quality</h3>
-              <p className="text-gray-600">
-                We source only the finest, freshest flowers from trusted growers worldwide. 
-                Each arrangement is crafted with love and attention to detail.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section id="testimonials" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-800 mb-6">Happy Brides</h2>
-            <p className="text-xl text-gray-600">See what our beautiful brides have to say</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <div key={index} className="bg-gradient-to-br from-pink-50 to-rose-50 rounded-2xl p-8 shadow-lg">
-                <div className="flex items-center mb-6">
-                  <img 
-                    src={testimonial.image} 
-                    alt={testimonial.name}
-                    className="w-16 h-16 rounded-full object-cover mr-4"
-                  />
-                  <div>
-                    <h4 className="font-bold text-gray-800">{testimonial.name}</h4>
-                    <div className="flex">
-                      {[...Array(testimonial.rating)].map((_, i) => (
-                        <Star key={i} size={16} className="text-yellow-400 fill-current" />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                <p className="text-gray-600 italic">"{testimonial.text}"</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Contact Section */}
-      <section id="contact" className="py-20 bg-gradient-to-br from-pink-600 to-rose-600 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-6">Let's Make Your Dream Wedding Bloom</h2>
-            <p className="text-xl text-pink-100 max-w-3xl mx-auto">
-              Ready to create the perfect floral arrangements for your special day? 
-              Contact us today for a personalized consultation.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            <div>
-              <h3 className="text-2xl font-bold mb-8">Get in Touch</h3>
-              <div className="space-y-6">
-                <div className="flex items-center">
-                  <Phone className="mr-4" size={24} />
-                  <span className="text-lg">(555) 123-BLOOM</span>
-                </div>
-                <div className="flex items-center">
-                  <Mail className="mr-4" size={24} />
-                  <span className="text-lg">hello@brideblooms.com</span>
-                </div>
-                <div className="flex items-center">
-                  <MapPin className="mr-4" size={24} />
-                  <span className="text-lg">123 Flower Street, Bloom City, BC 12345</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8">
-              <form className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <input
-                    type="text"
-                    placeholder="Your Name"
-                    className="bg-white/20 border border-white/30 rounded-lg px-4 py-3 text-white placeholder-pink-200 focus:ring-2 focus:ring-white/50 focus:border-transparent"
-                  />
-                  <input
-                    type="email"
-                    placeholder="Your Email"
-                    className="bg-white/20 border border-white/30 rounded-lg px-4 py-3 text-white placeholder-pink-200 focus:ring-2 focus:ring-white/50 focus:border-transparent"
-                  />
-                </div>
-                <input
-                  type="date"
-                  placeholder="Wedding Date"
-                  className="w-full bg-white/20 border border-white/30 rounded-lg px-4 py-3 text-white placeholder-pink-200 focus:ring-2 focus:ring-white/50 focus:border-transparent"
-                />
-                <textarea
-                  rows={4}
-                  placeholder="Tell us about your dream wedding..."
-                  className="w-full bg-white/20 border border-white/30 rounded-lg px-4 py-3 text-white placeholder-pink-200 focus:ring-2 focus:ring-white/50 focus:border-transparent"
-                ></textarea>
-                <button
-                  type="submit"
-                  className="w-full bg-white text-pink-600 py-3 rounded-lg font-semibold hover:bg-pink-50 transition-all"
-                >
-                  Send Message
-                </button>
-              </form>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center mb-4">
-                <Heart className="h-8 w-8 text-pink-500 mr-2" />
-                <span className="text-2xl font-bold">Bride Blooms</span>
-              </div>
-              <p className="text-gray-400">
-                Creating unforgettable wedding moments with beautiful flowers, guaranteed fresh in every season.
-              </p>
-            </div>
-            
-            <div>
-              <h4 className="text-lg font-semibold mb-4">Services</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li>Bridal Bouquets</li>
-                <li>Ceremony Decorations</li>
-                <li>Reception Centerpieces</li>
-                <li>Consultation Services</li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="text-lg font-semibold mb-4">Seasons</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li>Spring Collections</li>
-                <li>Summer Arrangements</li>
-                <li>Fall Designs</li>
-                <li>Winter Specials</li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="text-lg font-semibold mb-4">Follow Us</h4>
-              <div className="flex space-x-4">
-                <button className="bg-pink-600 p-2 rounded-full hover:bg-pink-700 transition-colors">
-                  <Heart size={20} />
-                </button>
-                <button className="bg-pink-600 p-2 rounded-full hover:bg-pink-700 transition-colors">
-                  <Star size={20} />
-                </button>
-              </div>
-            </div>
-          </div>
-          
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 Bride Blooms. All rights reserved. Making dreams bloom in every season. |Desire Vargas</p>
-          </div>
-        </div>
-      </footer>
-
-      {/* Login Modal */}
-      <LoginModal isOpen={showLogin} onClose={() => setShowLogin(false)} />
-    </div>
-
-  );
-  };
-
-
-export default BrideBlooms;
