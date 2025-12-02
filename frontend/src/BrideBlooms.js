@@ -365,7 +365,6 @@ const BrideBlooms = () => {
         } text-white animate-fade-in`}>
           {notification.message}
         </div>
-      
       )}
 
       {/* Navigation */}
@@ -381,6 +380,7 @@ const BrideBlooms = () => {
 
             <div className="hidden md:flex items-center space-x-8">
               <a href="#home" className="text-gray-700 hover:text-pink-600 transition-colors">Home</a>
+              <a href="#flowers" className="text-gray-700 hover:text-pink-600 transition-colors">Flowers</a>
               <a href="#flowers" className="text-gray-700 hover:text-pink-600 transition-colors">4 Seasons</a>
               <a href="#testimonials" className="text-gray-700 hover:text-pink-600 transition-colors">Reviews</a>
               <a href="#contact" className="text-gray-700 hover:text-pink-600 transition-colors">Contact</a>
@@ -435,6 +435,7 @@ const BrideBlooms = () => {
         <div className="md:hidden bg-white shadow-lg">
           <div className="px-2 pt-2 pb-3 space-y-1">
             <a href="#home" className="block px-3 py-2 text-gray-700">Home</a>
+            <a href="#flowers" className="block px-3 py-2 text-gray-700">Flowers</a>
             <a href="#flowers" className="block px-3 py-2 text-gray-700">4 Seasons</a>
             <a href="#testimonials" className="block px-3 py-2 text-gray-700">Reviews</a>
             <a href="#contact" className="block px-3 py-2 text-gray-700">Contact</a>
@@ -495,8 +496,6 @@ const BrideBlooms = () => {
               regardless of weather conditions or seasonal availability
             </p>
           </div>
-          </div>
-          </section>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
             {['spring', 'summer', 'fall', 'winter'].map((season) => (
@@ -572,5 +571,3 @@ const BrideBlooms = () => {
             ))}
           </div>
         </div>
-        );
-      };
