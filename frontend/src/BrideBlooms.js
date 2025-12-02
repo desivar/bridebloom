@@ -435,7 +435,6 @@ const BrideBlooms = () => {
         <div className="md:hidden bg-white shadow-lg">
           <div className="px-2 pt-2 pb-3 space-y-1">
             <a href="#home" className="block px-3 py-2 text-gray-700">Home</a>
-            <a href="#flowers" className="block px-3 py-2 text-gray-700">Flowers</a>
             <a href="#flowers" className="block px-3 py-2 text-gray-700">4 Seasons</a>
             <a href="#testimonials" className="block px-3 py-2 text-gray-700">Reviews</a>
             <a href="#contact" className="block px-3 py-2 text-gray-700">Contact</a>
