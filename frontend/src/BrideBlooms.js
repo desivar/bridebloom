@@ -381,7 +381,6 @@ const BrideBlooms = () => {
 
             <div className="hidden md:flex items-center space-x-8">
               <a href="#home" className="text-gray-700 hover:text-pink-600 transition-colors">Home</a>
-              <a href="#flowers" className="text-gray-700 hover:text-pink-600 transition-colors">Flowers</a>
               <a href="#flowers" className="text-gray-700 hover:text-pink-600 transition-colors">4 Seasons</a>
               <a href="#testimonials" className="text-gray-700 hover:text-pink-600 transition-colors">Reviews</a>
               <a href="#contact" className="text-gray-700 hover:text-pink-600 transition-colors">Contact</a>
@@ -572,3 +571,4 @@ const BrideBlooms = () => {
             ))}
           </div>
         </div>
+      
