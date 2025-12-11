@@ -2,11 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { Heart, Star, Calendar, MapPin, Phone, Mail, Menu, X, ShoppingCart, User } from 'lucide-react';
 
 // Simulate API call
+    export const AuthService = {
+
+  // 1. ADD THE login METHOD DEFINITION HERE
+  login: async (credentials) => {
+    // 2. THIS IS WHERE YOUR RETURN STATEMENT GOES, INSIDE THE FUNCTION BODY
     return { token: 'mock-token', user: { name: credentials.email.split('@')[0], email: credentials.email } };
-  },
+  }, // <-- The comma/brace for the login function
+
   register: async (userData) => {
     return { token: 'mock-token', user: { name: userData.name, email: userData.email } };
   },
+
   logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
