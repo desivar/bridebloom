@@ -1,64 +1,101 @@
-import React, { createContext, useState, useContext } from 'react';
+// src/context/AuthContext.js (Updated with real API calls)
 
-// Create the Context object
-const AuthContext = createContext(null);
+import React, { createContext, useState, useEffect } from 'react';
+
+// Define the base URL for your Express server
+const API_BASE_URL = 'http://localhost:5500/api/auth'; 
+
+export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  // State for authentication status and user data
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(false); // To handle async operations
+    // State to hold user data, often initialized from local storage
+    const [user, setUser] = useState(null); 
+    const [loading, setLoading] = useState(true); 
 
-  // Placeholder function for logging in
-  const login = async (email, password) => {
-    setLoading(true);
-    // *** Placeholder for API call ***
-    await new Promise(resolve => setTimeout(resolve, 1000)); 
-    
-    // Simple mock authentication logic
-    if (email === 'test@example.com' && password === 'password') {
-      setIsLoggedIn(true);
-      setUser({ email, name: 'Test Bride' });
-      alert('Login successful!');
-    } else {
-      alert('Invalid credentials (Use test@example.com / password)');
-    }
-    setLoading(false);
-  };
+    // --- Helper function to retrieve JWT token ---
+    const getToken = () => localStorage.getItem('token');
 
-  // Placeholder function for registering
-  const register = async (name, email, password, weddingDate) => {
-    setLoading(true);
-    // *** Placeholder for API call ***
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    setIsLoggedIn(true);
-    setUser({ email, name, weddingDate });
-    alert(`Welcome, ${name}! Registration successful.`);
-    setLoading(false);
-  };
+    // --- 1. Login Function (Connects to POST /api/auth/login) ---
+    const login = async (email, password) => {
+        setLoading(true);
+        try {
+            const response = await fetch(`${API_BASE_URL}/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+            });
 
-  // Function to log out
-  const logout = () => {
-    setIsLoggedIn(false);
-    setUser(null);
-  };
+            const data = await response.json();
 
-  const value = {
-    isLoggedIn,
-    user,
-    loading,
-    login,
-    logout,
-    register,
-  };
+            if (!response.ok) {
+                // Throw an error if the server returns non-2xx status (e.g., 401 Invalid Credentials)
+                throw new Error(data.message || 'Login failed due to network or server error.');
+            }
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+            // Success: Store token and user data
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user)); 
+            setUser(data.user);
+            
+        } catch (error) {
+            console.error('Login Error:', error.message);
+            throw error; // Re-throw to be handled by the Login.js component
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // --- 2. Register Function (Connects to POST /api/auth/register) ---
+    const register = async (userData) => {
+        setLoading(true);
+        try {
+            // userData should be the full object from the Register form
+            const response = await fetch(`${API_BASE_URL}/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(userData),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                // Throw an error if the server returns non-2xx status (e.g., 400 User Exists)
+                throw new Error(data.message || 'Registration failed.');
+            }
+            
+            // Success: Store token and user data
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user)); 
+            setUser(data.user);
+
+        } catch (error) {
+            console.error('Registration Error:', error.message);
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // --- 3. Logout Function (Clears local storage) ---
+    const logout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setUser(null);
+    };
+
+    // Context Value exposed to children
+    const value = {
+        user,
+        loading,
+        getToken,
+        login,
+        register,
+        logout
+    };
+
+    return (
+        <AuthContext.Provider value={value}>
+            {children}
+        </AuthContext.Provider>
+    );
 };
-
-// Custom hook to easily use the auth context
-export const useAuth = () => useContext(AuthContext);
