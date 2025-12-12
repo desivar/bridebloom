@@ -1,68 +1,77 @@
-import React, { createContext, useState, useContext } from 'react';
+// frontend/src/context/CartContext.js (Updated checkout function)
 
-const CartContext = createContext(null);
+import React, { createContext, useState, useContext } from 'react';
+// ⚠️ Import the ordersAPI you defined, and useAuth to get the token/user
+import { ordersAPI } from '../api'; 
+import { useAuth } from './AuthContext'; // Need auth context to get the token
+
+// ... (existing context definition and initial state) ...
 
 export const CartProvider = ({ children }) => {
-  const [cartItems, setCartItems] = useState([]);
+    const [cartItems, setCartItems] = useState([]);
+    const { getToken, user } = useAuth(); // Access auth methods/state
 
-  // Helper to ensure price is numeric for calculations
-  const getNumericPrice = (price) => parseFloat(price.toString().replace('$', ''));
+    // ... (existing helper functions like getNumericPrice, calculateTotal) ...
+    const getNumericPrice = (price) => parseFloat(price.toString().replace('$', ''));
+    const calculateTotal = (items) => {
+        return items.reduce((total, item) => total + (getNumericPrice(item.price) * item.quantity), 0);
+    };
 
-  // 1. Add to Cart (Existing function, slightly refined)
-  const addToCart = (product) => {
-    setCartItems(prevItems => {
-      const existingItemIndex = prevItems.findIndex(item => item.id === product.id);
+    // ... (existing functions: addToCart, removeFromCart, updateQuantity) ...
+    // ... (keep these the same, as they manage local storage/state) ...
 
-      if (existingItemIndex > -1) {
-        // Item exists: increase quantity
-        return prevItems.map((item, index) => 
-          index === existingItemIndex
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-      } else {
-        // New item: add it with quantity 1
-        return [...prevItems, { 
-            ...product, 
-            quantity: 1,
-            price: getNumericPrice(product.price) // Store price as a number
-        }];
-      }
-    });
-  };
+    // --- New Checkout/Place Order Logic ---
+    const checkout = async (deliveryDetails) => {
+        if (!user) {
+            throw new Error("User must be logged in to checkout.");
+        }
+        
+        if (cartItems.length === 0) {
+            throw new Error("Cannot checkout with an empty cart.");
+        }
 
-  // 2. Remove an item completely from the cart
-  const removeFromCart = (id) => {
-    setCartItems(prevItems => prevItems.filter(item => item.id !== id));
-  };
+        // 1. Format items for the OrderSchema
+        const itemsForOrder = cartItems.map(item => ({
+            // Use _id from the Flower object which is now retrieved from the API
+            flowerId: item._id || item.id, 
+            quantity: item.quantity,
+            customizations: item.customizations || '' 
+        }));
 
-  // 3. Update the quantity of a specific item
-  const updateQuantity = (id, newQuantity) => {
-    setCartItems(prevItems => {
-      if (newQuantity <= 0) {
-        // If new quantity is 0 or less, remove the item
-        return prevItems.filter(item => item.id !== id);
-      }
-      
-      return prevItems.map(item => 
-        item.id === id ? { ...item, quantity: newQuantity } : item
-      );
-    });
-  };
+        // 2. Build the final order object
+        const totalAmount = calculateTotal(cartItems);
+        
+        const orderData = {
+            items: itemsForOrder,
+            totalAmount: totalAmount,
+            deliveryDate: deliveryDetails.deliveryDate,
+            deliveryAddress: deliveryDetails.deliveryAddress,
+            specialInstructions: deliveryDetails.specialInstructions,
+        };
 
-  const value = {
-    cartItems,
-    addToCart,
-    removeFromCart,  // <--- ADDED
-    updateQuantity,  // <--- ADDED
-    clearCart: () => setCartItems([]), // Optional: for checkout
-  };
+        try {
+            // 🚀 Call the centralized API function (Token is automatically added by the axios interceptor!)
+            const newOrder = await ordersAPI.create(orderData);
 
-  return (
-    <CartContext.Provider value={value}>
-      {children}
-    </CartContext.Provider>
-  );
+            // 3. Success: Clear the client-side cart
+            setCartItems([]);
+            // Optional: Also clear cart from localStorage if you rely on cartAPI.getCart
+            // cartAPI.clearCart(); 
+            
+            return newOrder;
+        } catch (error) {
+            // Re-throw for the Checkout component to handle
+            throw new Error(error.response?.data?.message || 'Order placement failed.');
+        }
+    };
+    
+    const value = {
+        cartItems,
+        // ... (all other cart functions)
+        checkout, // Expose checkout
+        getCartTotal: () => calculateTotal(cartItems),
+        // ...
+    };
+
+    // ... (return CartContext.Provider) ...
 };
-
-export const useCart = () => useContext(CartContext);
