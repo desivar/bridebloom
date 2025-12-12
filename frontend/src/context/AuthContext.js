@@ -1,86 +1,114 @@
-// frontend/src/context/AuthContext.js (Updated to use axios-based api.js)
+// frontend/src/context/AuthContext.js
 
-import React, { createContext, useState, useEffect } from 'react';
-// ⚠️ Import the authAPI functions you defined
-import { authAPI } from '../api'; 
+import React, {
+    createContext,
+    useState,
+    useEffect,
+    useContext
+} from 'react';
 
-export const AuthContext = createContext();
+import { authAPI } from '../api';
+
+// Create context
+export const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-    // State to hold user data (initialize from local storage)
-    const initialUser = JSON.parse(localStorage.getItem('user')) || null;
-    const [user, setUser] = useState(initialUser);
+    // Load user from localStorage on startup
+    const [user, setUser] = useState(() =>
+        JSON.parse(localStorage.getItem('user')) || null
+    );
+
     const [loading, setLoading] = useState(false);
 
-    // Initial check for a user token (useful on page load)
+    // ----------------------------------
+    // Restore user if token exists but user state is empty
+    // ----------------------------------
     useEffect(() => {
         const token = localStorage.getItem('token');
-        if (token && !user) {
-            // Optional: If token exists but user state is missing,
-            // you might want to call authAPI.getCurrentUser() here
-            // to re-fetch user details and set the state.
-            // For now, we rely on the initialUser setup.
-        }
-    }, [user]); 
-    
-    // --- Helper function for components ---
-    const getToken = () => localStorage.getItem('token');
-    const isAuthenticated = !!user;
 
-    // --- 1. Login Function ---
+        if (token && !user) {
+            // Optional: fetch "current user" data
+            (async () => {
+                try {
+                    setLoading(true);
+                    const data = await authAPI.getCurrentUser();
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    setUser(data.user);
+                } catch {
+                    // Invalid token → clear stored token/user
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    setUser(null);
+                } finally {
+                    setLoading(false);
+                }
+            })();
+        }
+    }, [user]);
+
+    const isAuthenticated = Boolean(user);
+    const getToken = () => localStorage.getItem('token');
+
+    // ----------------------------------
+    // LOGIN
+    // ----------------------------------
     const login = async (email, password) => {
         setLoading(true);
         try {
-            // 🚀 Call the centralized API function
             const data = await authAPI.login({ email, password });
-            
-            // The token is stored by the interceptor/login function in api.js
-            // We just need to set the user state here.
-            localStorage.setItem('user', JSON.stringify(data.user)); 
+
+            // Token saved via axios interceptor
+            localStorage.setItem('user', JSON.stringify(data.user));
             setUser(data.user);
-            
         } catch (error) {
-            // Axios errors often include a response object
-            throw new Error(error.response?.data?.message || 'Login failed.');
+            throw new Error(
+                error.response?.data?.message || 'Login failed.'
+            );
         } finally {
             setLoading(false);
         }
     };
 
-    // --- 2. Register Function ---
+    // ----------------------------------
+    // REGISTER
+    // ----------------------------------
     const register = async (userData) => {
         setLoading(true);
         try {
-            // 🚀 Call the centralized API function
             const data = await authAPI.register(userData);
-            
-            // The token is stored by the interceptor/register function in api.js
-            localStorage.setItem('user', JSON.stringify(data.user)); 
-            setUser(data.user);
 
+            // Token saved via axios interceptor
+            localStorage.setItem('user', JSON.stringify(data.user));
+            setUser(data.user);
         } catch (error) {
-            throw new Error(error.response?.data?.message || 'Registration failed.');
+            throw new Error(
+                error.response?.data?.message || 'Registration failed.'
+            );
         } finally {
             setLoading(false);
         }
     };
 
-    // --- 3. Logout Function ---
+    // ----------------------------------
+    // LOGOUT
+    // ----------------------------------
     const logout = () => {
-        authAPI.logout(); // Clears token via the dedicated API function
+        authAPI.logout(); // Clears token in api.js
         localStorage.removeItem('user');
         setUser(null);
     };
 
-    // Context Value exposed to children
+    // ----------------------------------
+    // Context value
+    // ----------------------------------
     const value = {
         user,
         loading,
+        isAuthenticated,
         getToken,
-        isAuthenticated, // Expose isAuthenticated for cleaner checks in Header.js, etc.
         login,
         register,
-        logout
+        logout,
     };
 
     return (
@@ -90,4 +118,5 @@ export const AuthProvider = ({ children }) => {
     );
 };
 
+// Export a hook for easier access
 export const useAuth = () => useContext(AuthContext);
