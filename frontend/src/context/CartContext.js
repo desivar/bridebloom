@@ -1,77 +1,94 @@
-// frontend/src/context/CartContext.js (Updated checkout function)
+// frontend/src/context/AuthContext.js (Updated to use axios-based api.js)
 
-import React, { createContext, useState, useContext } from 'react';
-// ⚠️ Import the ordersAPI you defined, and useAuth to get the token/user
-import { ordersAPI } from '../api'; 
+import React, { createContext, useState, useEffect } from 'react';
+// ⚠️ Import the authAPI functions you defined
+import { authAPI } from '../api'; 
 import { useAuth } from './AuthContext'; // Need auth context to get the token
 
-// ... (existing context definition and initial state) ...
+export const AuthContext = createContext();
 
-export const CartProvider = ({ children }) => {
-    const [cartItems, setCartItems] = useState([]);
-    const { getToken, user } = useAuth(); // Access auth methods/state
+export const AuthProvider = ({ children }) => {
+    // State to hold user data (initialize from local storage)
+    const initialUser = JSON.parse(localStorage.getItem('user')) || null;
+    const [user, setUser] = useState(initialUser);
+    const [loading, setLoading] = useState(false);
 
-    // ... (existing helper functions like getNumericPrice, calculateTotal) ...
-    const getNumericPrice = (price) => parseFloat(price.toString().replace('$', ''));
-    const calculateTotal = (items) => {
-        return items.reduce((total, item) => total + (getNumericPrice(item.price) * item.quantity), 0);
-    };
-
-    // ... (existing functions: addToCart, removeFromCart, updateQuantity) ...
-    // ... (keep these the same, as they manage local storage/state) ...
-
-    // --- New Checkout/Place Order Logic ---
-    const checkout = async (deliveryDetails) => {
-        if (!user) {
-            throw new Error("User must be logged in to checkout.");
+    // Initial check for a user token (useful on page load)
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (token && !user) {
+            // Optional: If token exists but user state is missing,
+            // you might want to call authAPI.getCurrentUser() here
+            // to re-fetch user details and set the state.
+            // For now, we rely on the initialUser setup.
         }
-        
-        if (cartItems.length === 0) {
-            throw new Error("Cannot checkout with an empty cart.");
-        }
-
-        // 1. Format items for the OrderSchema
-        const itemsForOrder = cartItems.map(item => ({
-            // Use _id from the Flower object which is now retrieved from the API
-            flowerId: item._id || item.id, 
-            quantity: item.quantity,
-            customizations: item.customizations || '' 
-        }));
-
-        // 2. Build the final order object
-        const totalAmount = calculateTotal(cartItems);
-        
-        const orderData = {
-            items: itemsForOrder,
-            totalAmount: totalAmount,
-            deliveryDate: deliveryDetails.deliveryDate,
-            deliveryAddress: deliveryDetails.deliveryAddress,
-            specialInstructions: deliveryDetails.specialInstructions,
-        };
-
-        try {
-            // 🚀 Call the centralized API function (Token is automatically added by the axios interceptor!)
-            const newOrder = await ordersAPI.create(orderData);
-
-            // 3. Success: Clear the client-side cart
-            setCartItems([]);
-            // Optional: Also clear cart from localStorage if you rely on cartAPI.getCart
-            // cartAPI.clearCart(); 
-            
-            return newOrder;
-        } catch (error) {
-            // Re-throw for the Checkout component to handle
-            throw new Error(error.response?.data?.message || 'Order placement failed.');
-        }
-    };
+    }, [user]); 
     
-    const value = {
-        cartItems,
-        // ... (all other cart functions)
-        checkout, // Expose checkout
-        getCartTotal: () => calculateTotal(cartItems),
-        // ...
+    // --- Helper function for components ---
+    const getToken = () => localStorage.getItem('token');
+    const isAuthenticated = !!user;
+
+    // --- 1. Login Function ---
+    const login = async (email, password) => {
+        setLoading(true);
+        try {
+            // 🚀 Call the centralized API function
+            const data = await authAPI.login({ email, password });
+            
+            // The token is stored by the interceptor/login function in api.js
+            // We just need to set the user state here.
+            localStorage.setItem('user', JSON.stringify(data.user)); 
+            setUser(data.user);
+            
+        } catch (error) {
+            // Axios errors often include a response object
+            throw new Error(error.response?.data?.message || 'Login failed.');
+        } finally {
+            setLoading(false);
+        }
     };
 
-    // ... (return CartContext.Provider) ...
+    // --- 2. Register Function ---
+    const register = async (userData) => {
+        setLoading(true);
+        try {
+            // 🚀 Call the centralized API function
+            const data = await authAPI.register(userData);
+            
+            // The token is stored by the interceptor/register function in api.js
+            localStorage.setItem('user', JSON.stringify(data.user)); 
+            setUser(data.user);
+
+        } catch (error) {
+            throw new Error(error.response?.data?.message || 'Registration failed.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // --- 3. Logout Function ---
+    const logout = () => {
+        authAPI.logout(); // Clears token via the dedicated API function
+        localStorage.removeItem('user');
+        setUser(null);
+    };
+
+    // Context Value exposed to children
+    const value = {
+        user,
+        loading,
+        getToken,
+        isAuthenticated, // Expose isAuthenticated for cleaner checks in Header.js, etc.
+        login,
+        register,
+        logout
+    };
+
+    return (
+        <AuthContext.Provider value={value}>
+            {children}
+        </AuthContext.Provider>
+    );
 };
+
+export const useAuth = () => useContext(AuthContext);
