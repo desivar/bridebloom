@@ -1,94 +1,91 @@
-// frontend/src/context/AuthContext.js (Updated to use axios-based api.js)
+import React, { createContext, useState, useContext } from 'react';
 
-import React, { createContext, useState, useEffect } from 'react';
-// ⚠️ Import the authAPI functions you defined
-import { authAPI } from '../api'; 
-import { useAuth } from './AuthContext'; // Need auth context to get the token
+const CartContext = createContext(null);
 
-export const AuthContext = createContext();
+export const CartProvider = ({ children }) => {
+  const [cartItems, setCartItems] = useState([]);
 
-export const AuthProvider = ({ children }) => {
-    // State to hold user data (initialize from local storage)
-    const initialUser = JSON.parse(localStorage.getItem('user')) || null;
-    const [user, setUser] = useState(initialUser);
-    const [loading, setLoading] = useState(false);
+  // -----------------------------
+  // Helpers
+  // -----------------------------
+  const getNumericPrice = (price) =>
+    parseFloat(price.toString().replace('$', ''));
 
-    // Initial check for a user token (useful on page load)
-    useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (token && !user) {
-            // Optional: If token exists but user state is missing,
-            // you might want to call authAPI.getCurrentUser() here
-            // to re-fetch user details and set the state.
-            // For now, we rely on the initialUser setup.
-        }
-    }, [user]); 
-    
-    // --- Helper function for components ---
-    const getToken = () => localStorage.getItem('token');
-    const isAuthenticated = !!user;
+  // -----------------------------
+  // Add item to cart
+  // -----------------------------
+  const addToCart = (product) => {
+    setCartItems((prevItems) => {
+      const existingIndex = prevItems.findIndex(
+        (item) => item.id === product.id
+      );
 
-    // --- 1. Login Function ---
-    const login = async (email, password) => {
-        setLoading(true);
-        try {
-            // 🚀 Call the centralized API function
-            const data = await authAPI.login({ email, password });
-            
-            // The token is stored by the interceptor/login function in api.js
-            // We just need to set the user state here.
-            localStorage.setItem('user', JSON.stringify(data.user)); 
-            setUser(data.user);
-            
-        } catch (error) {
-            // Axios errors often include a response object
-            throw new Error(error.response?.data?.message || 'Login failed.');
-        } finally {
-            setLoading(false);
-        }
-    };
+      if (existingIndex !== -1) {
+        // Increase quantity for existing item
+        return prevItems.map((item, index) =>
+          index === existingIndex
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
 
-    // --- 2. Register Function ---
-    const register = async (userData) => {
-        setLoading(true);
-        try {
-            // 🚀 Call the centralized API function
-            const data = await authAPI.register(userData);
-            
-            // The token is stored by the interceptor/register function in api.js
-            localStorage.setItem('user', JSON.stringify(data.user)); 
-            setUser(data.user);
+      // Add new item
+      return [
+        ...prevItems,
+        {
+          ...product,
+          quantity: 1,
+          price: getNumericPrice(product.price), // always numeric
+        },
+      ];
+    });
+  };
 
-        } catch (error) {
-            throw new Error(error.response?.data?.message || 'Registration failed.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // --- 3. Logout Function ---
-    const logout = () => {
-        authAPI.logout(); // Clears token via the dedicated API function
-        localStorage.removeItem('user');
-        setUser(null);
-    };
-
-    // Context Value exposed to children
-    const value = {
-        user,
-        loading,
-        getToken,
-        isAuthenticated, // Expose isAuthenticated for cleaner checks in Header.js, etc.
-        login,
-        register,
-        logout
-    };
-
-    return (
-        <AuthContext.Provider value={value}>
-            {children}
-        </AuthContext.Provider>
+  // -----------------------------
+  // Remove item completely
+  // -----------------------------
+  const removeFromCart = (id) => {
+    setCartItems((prevItems) =>
+      prevItems.filter((item) => item.id !== id)
     );
+  };
+
+  // -----------------------------
+  // Update quantity (or remove if <= 0)
+  // -----------------------------
+  const updateQuantity = (id, newQuantity) => {
+    setCartItems((prevItems) => {
+      if (newQuantity <= 0) {
+        return prevItems.filter((item) => item.id !== id);
+      }
+
+      return prevItems.map((item) =>
+        item.id === id ? { ...item, quantity: newQuantity } : item
+      );
+    });
+  };
+
+  // -----------------------------
+  // Clear Cart
+  // -----------------------------
+  const clearCart = () => setCartItems([]);
+
+  // -----------------------------
+  // Context Value
+  // -----------------------------
+  const value = {
+    cartItems,
+    addToCart,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
+  };
+
+  return (
+    <CartContext.Provider value={value}>
+      {children}
+    </CartContext.Provider>
+  );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useCart = () => useContext(CartContext);
