@@ -15,7 +15,7 @@ const root = ReactDOM.createRoot(rootElement);
 // Render your main application component into the root
 root.render(
   <React.StrictMode>
-    <BrideBlooms /> {/* <--- THIS IS THE CHANGE! It renders your main component by its new name. */}
+    <BrideBlooms /> 
   </React.StrictMode>
 );
 
