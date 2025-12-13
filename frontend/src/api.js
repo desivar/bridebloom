@@ -276,16 +276,22 @@ export const uploadAPI = {
 
 // Weather API for seasonal recommendations
 export const weatherAPI = {
-    getCurrentWeather: async (location) => {
-        const response = await api.get(`/api/weather?location=${location}`);
-        return response.data;
-    },
+    getCurrentWeather: async (location) => {
+        const response = await api.get(
+            `/api/weather?location=${encodeURIComponent(location)}`
+        );
+        return response.data;
+    },
 
-    getSeasonalRecommendations: async (weddingDate, location) => {
-        const response = await api.get(`/api/weather/recommendations?date=<span class="math-inline">\{weddingDate\}&location\=</span>{location}`);
-        return response.data;
-    },
+    getSeasonalRecommendations: async (weddingDate, location) => {
+        const response = await api.get(
+            `/api/weather/recommendations?date=${encodeURIComponent(weddingDate)}&location=${encodeURIComponent(location)}`
+        );
+        return response.data;
+    },
 };
+
+
 
 // Analytics API (for admin)
 export const analyticsAPI = {

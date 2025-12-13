@@ -219,11 +219,18 @@ const BrideBlooms = () => {
               <a href="#testimonials" className="text-gray-700 hover:text-pink-600 transition-colors">Reviews</a>
               <a href="#contact" className="text-gray-700 hover:text-pink-600 transition-colors">Contact</a>
               
-              <div className="flex items-center space-x-4">
-                <button className="text-gray-700 hover:text-pink-600 transition-colors">
-                  <ShoppingCart size={20} />
-                </button>
-              
+            <div className="flex items-center space-x-4">
+    {/* SINGLE Cart Icon */}
+    <button className="text-gray-700 hover:text-pink-600 transition-colors">
+      <ShoppingCart size={20} />
+    </button>
+    
+    {/* Correctly placed DYNAMIC Sign In / Logout Button */}
+    {isLoggedIn ? ( /* Logout Logic */ ) : ( /* Sign In Logic */ )}
+  </div>
+</div>
+    
+   
 
             <button 
               className="md:hidden"
@@ -234,9 +241,8 @@ const BrideBlooms = () => {
           </div>
         </div>
       </div>
-      </div>
-        
-      </nav>
+    
+         </nav>
 
       {/* Mobile Menu */}
       {isMenuOpen && (
@@ -250,8 +256,37 @@ const BrideBlooms = () => {
           </div>
         </div>
       )}
+      <div className="flex items-center space-x-4">
+    {/* Cart Icon */}
+    <button className="text-gray-700 hover:text-pink-600 transition-colors">
+      <ShoppingCart size={20} />
+    </button>
+    
+    {/* DYNAMIC AUTH BUTTON (This uses the useAuth hook you defined in Step 2) */}
+    {isLoggedIn ? (
+      <>
+        <span className="text-sm text-gray-700">Hi, {currentUser.name}!</span>
+        {isAdmin && <a href="/admin" className="text-pink-600 font-bold">Admin</a>}
+        <button 
+          onClick={logout} 
+          className="text-pink-600 hover:text-pink-800 font-semibold"
+        >
+          Logout
+        </button>
+      </>
+    ) : (
+      <button 
+        onClick={() => setShowLogin(true)} 
+        className="flex items-center text-pink-600 hover:text-pink-800 transition-colors"
+      >
+        <User size={20} className="mr-1" />
+        Sign In
+      </button>
+    )}
+  </div>
+</div>
 
-      {/* Hero Section */}
+{/* Hero Section */}
       <section id="home" className="relative h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-pink-600/20 to-rose-600/20"></div>
         <div 
@@ -570,7 +605,5 @@ const BrideBlooms = () => {
     </div>
 
   );
-  };
-
 
 export default BrideBlooms;

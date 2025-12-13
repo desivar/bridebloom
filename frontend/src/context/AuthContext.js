@@ -1,5 +1,3 @@
-// frontend/src/context/AuthContext.js
-
 import React, {
     createContext,
     useState,
@@ -9,55 +7,55 @@ import React, {
 
 import { authAPI } from '../api';
 
-// Create context
 export const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-    // Load user from localStorage on startup
     const [user, setUser] = useState(() =>
         JSON.parse(localStorage.getItem('user')) || null
     );
 
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
 
-    // ----------------------------------
-    // Restore user if token exists but user state is empty
-    // ----------------------------------
+    const token = localStorage.getItem('token');
+
+    /* ===============================
+       RESTORE SESSION
+    ================================ */
     useEffect(() => {
-        const token = localStorage.getItem('token');
-
-        if (token && !user) {
-            // Optional: fetch "current user" data
-            (async () => {
-                try {
-                    setLoading(true);
-                    const data = await authAPI.getCurrentUser();
-                    localStorage.setItem('user', JSON.stringify(data.user));
-                    setUser(data.user);
-                } catch {
-                    // Invalid token → clear stored token/user
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('user');
-                    setUser(null);
-                } finally {
-                    setLoading(false);
-                }
-            })();
+        if (!token || user) {
+            setLoading(false);
+            return;
         }
-    }, [user]);
+
+        const restoreUser = async () => {
+            try {
+                const data = await authAPI.getCurrentUser();
+                localStorage.setItem('user', JSON.stringify(data.user));
+                setUser(data.user);
+            } catch {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                setUser(null);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        restoreUser();
+    }, [token, user]);
 
     const isAuthenticated = Boolean(user);
-    const getToken = () => localStorage.getItem('token');
 
-    // ----------------------------------
-    // LOGIN
-    // ----------------------------------
+    /* ===============================
+       LOGIN
+    ================================ */
     const login = async (email, password) => {
         setLoading(true);
         try {
             const data = await authAPI.login({ email, password });
 
-            // Token saved via axios interceptor
+            // ✅ SAVE TOKEN HERE
+            localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify(data.user));
             setUser(data.user);
         } catch (error) {
@@ -69,15 +67,16 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    // ----------------------------------
-    // REGISTER
-    // ----------------------------------
+    /* ===============================
+       REGISTER
+    ================================ */
     const register = async (userData) => {
         setLoading(true);
         try {
             const data = await authAPI.register(userData);
 
-            // Token saved via axios interceptor
+            // ✅ SAVE TOKEN HERE
+            localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify(data.user));
             setUser(data.user);
         } catch (error) {
@@ -89,23 +88,23 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    // ----------------------------------
-    // LOGOUT
-    // ----------------------------------
-    const logout = () => {
-        authAPI.logout(); // Clears token in api.js
-        localStorage.removeItem('user');
-        setUser(null);
+    /* ===============================
+       LOGOUT
+    ================================ */
+    const logout = async () => {
+        try {
+            await authAPI.logout();
+        } finally {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            setUser(null);
+        }
     };
 
-    // ----------------------------------
-    // Context value
-    // ----------------------------------
     const value = {
         user,
         loading,
         isAuthenticated,
-        getToken,
         login,
         register,
         logout,
@@ -118,5 +117,4 @@ export const AuthProvider = ({ children }) => {
     );
 };
 
-// Export a hook for easier access
 export const useAuth = () => useContext(AuthContext);
