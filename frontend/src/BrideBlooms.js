@@ -2,14 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { Heart, Star, Calendar, MapPin, Phone, Mail, Menu, X, ShoppingCart, User } from 'lucide-react';
 
 // Simulate API call
-    export const AuthService = {
-
-  // 1. ADD THE login METHOD DEFINITION HERE
+export const AuthService = {
   login: async (credentials) => {
-    // 2. THIS IS WHERE YOUR RETURN STATEMENT GOES, INSIDE THE FUNCTION BODY
-    return { token: 'mock-token', user: { name: credentials.email.split('@')[0], email: credentials.email } };
-  }, // <-- The comma/brace for the login function
-
+    // Simulate API delay
+    return new Promise(resolve => {
+      setTimeout(() => {
+        const user = { 
+          token: 'mock-token', 
+          user: { 
+            name: credentials.email.split('@')[0], 
+            email: credentials.email 
+          } 
+        };
+        localStorage.setItem('token', user.token);
+        localStorage.setItem('user', JSON.stringify(user.user));
+        resolve(user);
+      }, 500);
+    });
+  },
+  
   register: async (userData) => {
     return { token: 'mock-token', user: { name: userData.name, email: userData.email } };
   },
@@ -19,6 +30,7 @@ import { Heart, Star, Calendar, MapPin, Phone, Mail, Menu, X, ShoppingCart, User
     localStorage.removeItem('user');
   }
 };
+
 const cartAPI = {
   getCart: () => {
     const cart = localStorage.getItem('cart');
@@ -35,7 +47,7 @@ const cartAPI = {
     localStorage.setItem('cart', JSON.stringify(cart));
     return cart;
   },
-   removeFromCart: (itemId) => {
+  removeFromCart: (itemId) => {
     const cart = cartAPI.getCart();
     const updatedCart = cart.filter(item => item.id !== itemId);
     localStorage.setItem('cart', JSON.stringify(updatedCart));
@@ -57,9 +69,9 @@ const cartAPI = {
     }, 0);
   }
 };
+
 const consultationAPI = {
   schedule: async (data) => {
-    // Simulate API call
     return { success: true, message: 'Consultation scheduled successfully!' };
   }
 };
@@ -68,6 +80,22 @@ const BrideBlooms = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [currentSeason, setCurrentSeason] = useState('spring');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [showLogin, setShowLogin] = useState(false);
+  const [cartItems, setCartItems] = useState([]);
+
+  // Check login status on component mount
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
+    if (token && userData) {
+      setIsLoggedIn(true);
+      setCurrentUser(JSON.parse(userData));
+    }
+    
+    // Load cart items
+    setCartItems(cartAPI.getCart());
+  }, []);
 
   // Sample data for flowers by season
   const flowersBySeasonData = {
@@ -125,10 +153,50 @@ const BrideBlooms = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Login and logout functions
+  const handleLogin = async (credentials) => {
+    try {
+      const result = await AuthService.login(credentials);
+      setIsLoggedIn(true);
+      setCurrentUser(result.user);
+      setShowLogin(false);
+    } catch (error) {
+      console.error('Login failed:', error);
+    }
+  };
+
+  const handleLogout = () => {
+    AuthService.logout();
+    setIsLoggedIn(false);
+    setCurrentUser(null);
+  };
+
+  const handleAddToCart = (item) => {
+    const updatedCart = cartAPI.addToCart(item);
+    setCartItems(updatedCart);
+  };
+
   const LoginModal = ({ isOpen, onClose }) => {
     const [isLogin, setIsLogin] = useState(true);
+    const [formData, setFormData] = useState({
+      name: '',
+      email: '',
+      password: '',
+      weddingDate: ''
+    });
     
     if (!isOpen) return null;
+
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+      if (isLogin) {
+        await handleLogin({ email: formData.email, password: formData.password });
+      } else {
+        // Handle registration
+        await AuthService.register(formData);
+        await handleLogin({ email: formData.email, password: formData.password });
+      }
+    };
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -149,28 +217,38 @@ const BrideBlooms = () => {
             </p>
           </div>
 
-          <form className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {!isLogin && (
               <input
                 type="text"
                 placeholder="Full Name"
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
               />
             )}
             <input
               type="email"
               placeholder="Email Address"
+              value={formData.email}
+              onChange={(e) => setFormData({...formData, email: e.target.value})}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+              required
             />
             <input
               type="password"
               placeholder="Password"
+              value={formData.password}
+              onChange={(e) => setFormData({...formData, password: e.target.value})}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+              required
             />
             {!isLogin && (
               <input
                 type="date"
                 placeholder="Wedding Date"
+                value={formData.weddingDate}
+                onChange={(e) => setFormData({...formData, weddingDate: e.target.value})}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
               />
             )}
@@ -196,8 +274,6 @@ const BrideBlooms = () => {
     );
   };
 
-  const [showLogin, setShowLogin] = useState(false);
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-rose-50">
       {/* Navigation */}
@@ -210,8 +286,8 @@ const BrideBlooms = () => {
                 Bride Blooms
               </span>
             </div>
-
             
+            {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8">
               <a href="#home" className="text-gray-700 hover:text-pink-600 transition-colors">Home</a>
               <a href="#flowers" className="text-gray-700 hover:text-pink-600 transition-colors">Flowers</a>
@@ -219,19 +295,35 @@ const BrideBlooms = () => {
               <a href="#testimonials" className="text-gray-700 hover:text-pink-600 transition-colors">Reviews</a>
               <a href="#contact" className="text-gray-700 hover:text-pink-600 transition-colors">Contact</a>
               
-            <div className="flex items-center space-x-4">
-    {/* SINGLE Cart Icon */}
-    <button className="text-gray-700 hover:text-pink-600 transition-colors">
-      <ShoppingCart size={20} />
-    </button>
-    
-    {/* Correctly placed DYNAMIC Sign In / Logout Button */}
-    {isLoggedIn ? ( /* Logout Logic */ ) : ( /* Sign In Logic */ )}
-  </div>
-</div>
-    
-   
+              {/* Shopping Cart Icon */}
+              <button className="text-gray-700 hover:text-pink-600 transition-colors">
+                <ShoppingCart size={20} />
+              </button>
+              
+              {/* SIGN IN BUTTON with Icon */}
+              {isLoggedIn ? (
+                <div className="flex items-center space-x-4">
+                  <span className="text-sm text-gray-700">Hi, {currentUser?.name || 'User'}!</span>
+                  <button 
+                    onClick={handleLogout}
+                    className="flex items-center text-pink-600 hover:text-pink-800 transition-colors"
+                  >
+                    <User size={20} className="mr-1" />
+                    Logout
+                  </button>
+                </div>
+              ) : (
+                <button 
+                  onClick={() => setShowLogin(true)}
+                  className="flex items-center text-pink-600 hover:text-pink-800 transition-colors"
+                >
+                  <User size={20} className="mr-1" />
+                  Sign In
+                </button>
+              )}
+            </div>
 
+            {/* Mobile menu button */}
             <button 
               className="md:hidden"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -240,53 +332,49 @@ const BrideBlooms = () => {
             </button>
           </div>
         </div>
-      </div>
-    
-         </nav>
 
-      {/* Mobile Menu */}
-      {isMenuOpen && (
-        <div className="md:hidden bg-white shadow-lg">
-          <div className="px-2 pt-2 pb-3 space-y-1">
-            <a href="#home" className="block px-3 py-2 text-gray-700">Home</a>
-            <a href="#flowers" className="block px-3 py-2 text-gray-700">Flowers</a>
-            <a href="#seasons" className="block px-3 py-2 text-gray-700">4 Seasons</a>
-            <a href="#testimonials" className="block px-3 py-2 text-gray-700">Reviews</a>
-            <a href="#contact" className="block px-3 py-2 text-gray-700">Contact</a>
+        {/* Mobile Menu */}
+        {isMenuOpen && (
+          <div className="md:hidden bg-white shadow-lg">
+            <div className="px-2 pt-2 pb-3 space-y-1">
+              <a href="#home" className="block px-3 py-2 text-gray-700">Home</a>
+              <a href="#flowers" className="block px-3 py-2 text-gray-700">Flowers</a>
+              <a href="#seasons" className="block px-3 py-2 text-gray-700">4 Seasons</a>
+              <a href="#testimonials" className="block px-3 py-2 text-gray-700">Reviews</a>
+              <a href="#contact" className="block px-3 py-2 text-gray-700">Contact</a>
+              
+              {/* Mobile Sign In Button */}
+              <div className="px-3 py-2">
+                {isLoggedIn ? (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-700">Hi, {currentUser?.name || 'User'}!</span>
+                    <button 
+                      onClick={handleLogout}
+                      className="flex items-center text-pink-600 hover:text-pink-800 transition-colors"
+                    >
+                      <User size={20} className="mr-1" />
+                      Logout
+                    </button>
+                  </div>
+                ) : (
+                  <button 
+                    onClick={() => {
+                      setShowLogin(true);
+                      setIsMenuOpen(false);
+                    }}
+                    className="flex items-center w-full text-pink-600 hover:text-pink-800 transition-colors"
+                  >
+                    <User size={20} className="mr-2" />
+                    Sign In
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
-      )}
-      <div className="flex items-center space-x-4">
-    {/* Cart Icon */}
-    <button className="text-gray-700 hover:text-pink-600 transition-colors">
-      <ShoppingCart size={20} />
-    </button>
-    
-    {/* DYNAMIC AUTH BUTTON (This uses the useAuth hook you defined in Step 2) */}
-    {isLoggedIn ? (
-      <>
-        <span className="text-sm text-gray-700">Hi, {currentUser.name}!</span>
-        {isAdmin && <a href="/admin" className="text-pink-600 font-bold">Admin</a>}
-        <button 
-          onClick={logout} 
-          className="text-pink-600 hover:text-pink-800 font-semibold"
-        >
-          Logout
-        </button>
-      </>
-    ) : (
-      <button 
-        onClick={() => setShowLogin(true)} 
-        className="flex items-center text-pink-600 hover:text-pink-800 transition-colors"
-      >
-        <User size={20} className="mr-1" />
-        Sign In
-      </button>
-    )}
-  </div>
-</div>
+        )}
+      </nav>
 
-{/* Hero Section */}
+      {/* Hero Section */}
       <section id="home" className="relative h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-pink-600/20 to-rose-600/20"></div>
         <div 
@@ -299,7 +387,7 @@ const BrideBlooms = () => {
         <div className="relative z-10 text-center text-white max-w-4xl mx-auto px-4">
           <h1 className="text-5xl md:text-7xl font-bold mb-6 animate-fade-in">
             Your Dream Wedding
-            <span className="block bg-gradient-to-r from-black-300 to-blue-300 bg-clip-text text-transparent">
+            <span className="block bg-gradient-to-r from-black-30 to-blue-300 bg-clip-text text-transparent">
               Blooms Here
             </span>
           </h1>
@@ -390,7 +478,10 @@ const BrideBlooms = () => {
                   <h3 className="text-xl font-bold text-gray-800 mb-2">{flower.name}</h3>
                   <div className="flex justify-between items-center">
                     <span className="text-2xl font-bold text-pink-600">{flower.price}</span>
-                    <button className="bg-gradient-to-r from-pink-500 to-rose-500 text-white px-4 py-2 rounded-full hover:from-pink-600 hover:to-rose-600 transition-all">
+                    <button 
+                      onClick={() => handleAddToCart(flower)}
+                      className="bg-gradient-to-r from-pink-500 to-rose-500 text-white px-4 py-2 rounded-full hover:from-pink-600 hover:to-rose-600 transition-all"
+                    >
                       Add to Cart
                     </button>
                   </div>
@@ -603,7 +694,7 @@ const BrideBlooms = () => {
       {/* Login Modal */}
       <LoginModal isOpen={showLogin} onClose={() => setShowLogin(false)} />
     </div>
-
   );
+};
 
 export default BrideBlooms;
