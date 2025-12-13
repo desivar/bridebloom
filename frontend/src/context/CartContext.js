@@ -1,6 +1,6 @@
-// src/context/CartContext.js
+// frontend/src/context/CartContext.js
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { cartAPI as localCartAPI } from '../api'; // Local storage API
+import { cartAPI as localCartAPI } from '../api';
 import { useAuth } from './AuthContext';
 
 const CartContext = createContext(null);
@@ -23,7 +23,7 @@ export const CartProvider = ({ children }) => {
     price: typeof flower.price === 'string' 
       ? parseFloat(flower.price.replace('$', ''))
       : flower.price,
-    image: flower.image || flower.imageUrl,
+    image: flower.image || flower.imageUrl || flower.image,
     season: flower.season,
     category: flower.category,
     quantity
@@ -113,22 +113,6 @@ export const CartProvider = ({ children }) => {
     return cartItems.reduce((count, item) => count + item.quantity, 0);
   };
 
-  // Sync cart to backend (when user logs in/registers)
-  const syncCartToBackend = async () => {
-    if (!isAuthenticated || cartItems.length === 0) return;
-    
-    setIsLoading(true);
-    try {
-      // Here you would make API calls to sync cart to backend
-      // For now, we'll just use localStorage
-      console.log('Cart would be synced to backend for user:', user.email);
-    } catch (error) {
-      console.error('Failed to sync cart to backend:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   // Context value
   const value = {
     cartItems,
@@ -139,7 +123,6 @@ export const CartProvider = ({ children }) => {
     clearCart,
     getCartTotal,
     getItemCount,
-    syncCartToBackend,
     loadCart
   };
 
