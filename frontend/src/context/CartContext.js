@@ -1,6 +1,6 @@
 // frontend/src/context/CartContext.js
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { cartAPI as localCartAPI } from '../api';
+import { cartAPI as localCartAPI } from '../api';  // FIXED: Changed from './api' to '../api'
 import { useAuth } from './AuthContext';
 
 const CartContext = createContext(null);
@@ -23,7 +23,7 @@ export const CartProvider = ({ children }) => {
     price: typeof flower.price === 'string' 
       ? parseFloat(flower.price.replace('$', ''))
       : flower.price,
-    image: flower.image || flower.imageUrl || flower.image,
+    image: flower.image || flower.imageUrl,
     season: flower.season,
     category: flower.category,
     quantity

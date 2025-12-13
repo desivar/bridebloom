@@ -3,9 +3,11 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 
-import BrideBlooms from './components/BrideBlooms'; // Updated path
+// Import from the correct location - it's in src/, not src/components/
+import BrideBlooms from './BrideBlooms'; // Changed from './components/BrideBlooms'
+
 import { AuthProvider } from './context/AuthContext';
-import { CartProvider } from './context/CartContext'; // Add CartProvider
+import { CartProvider } from './context/CartContext';
 
 import reportWebVitals from './reportWebVitals';
 

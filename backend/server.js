@@ -824,6 +824,98 @@ const initializeData = async () => {
     console.error('Error initializing data:', error);
   }
 };
+// Add this function to server.js (before app.listen)
+const initializeFlowerData = async () => {
+  try {
+    const flowerCount = await Flower.countDocuments();
+    if (flowerCount === 0) {
+      const sampleFlowers = [
+        {
+          name: 'Romantic Rose Bouquet',
+          description: 'Classic red roses perfect for any season. Hand-tied with baby\'s breath and greenery.',
+          price: 89.99,
+          season: 'all-season',
+          color: ['red', 'pink'],
+          category: 'bouquet',
+          imageUrl: 'https://img.freepik.com/premium-psd/red-roses-wedding-arrangement_176841-58423.jpg',
+          image: 'https://img.freepik.com/premium-psd/red-roses-wedding-arrangement_176841-58423.jpg',
+          popularity: 95
+        },
+        {
+          name: 'Spring Tulip Centerpiece',
+          description: 'Vibrant tulips for spring celebrations. Perfect for table arrangements.',
+          price: 65.99,
+          season: 'spring',
+          color: ['pink', 'yellow', 'purple'],
+          category: 'centerpiece',
+          imageUrl: 'https://th.bing.com/th/id/OIP.-mjdzxOQeE5rVwmeoGynUwAAAA?rs=1&pid=ImgDetMain&cb=idpwebpc2',
+          image: 'https://th.bing.com/th/id/OIP.-mjdzxOQeE5rVwmeoGynUwAAAA?rs=1&pid=ImgDetMain&cb=idpwebpc2',
+          popularity: 85
+        },
+        {
+          name: 'Summer Sunflower Bliss',
+          description: 'Bright sunflowers that capture the essence of summer.',
+          price: 75.99,
+          season: 'summer',
+          color: ['yellow', 'orange'],
+          category: 'bouquet',
+          imageUrl: 'https://cdn11.bigcommerce.com/s-0023c/images/stencil/1280w/products/2483/7882/IMG20230718114054_002__20230.1689645075.jpg?c=2',
+          image: 'https://cdn11.bigcommerce.com/s-0023c/images/stencil/1280w/products/2483/7882/IMG20230718114054_002__20230.1689645075.jpg?c=2',
+          popularity: 88
+        },
+        {
+          name: 'Autumn Elegance Bouquet',
+          description: 'Warm tones of fall with dahlias, chrysanthemums, and berries.',
+          price: 82.99,
+          season: 'fall',
+          color: ['orange', 'red', 'burgundy'],
+          category: 'bouquet',
+          imageUrl: 'https://s-media-cache-ak0.pinimg.com/736x/ac/0c/18/ac0c1831e5627b38773ca68d8c995593.jpg',
+          image: 'https://s-media-cache-ak0.pinimg.com/736x/ac/0c/18/ac0c1831e5627b38773ca68d8c995593.jpg',
+          popularity: 90
+        },
+        {
+          name: 'Winter White Wonder',
+          description: 'Elegant white flowers for a winter wonderland wedding.',
+          price: 99.99,
+          season: 'winter',
+          color: ['white', 'silver'],
+          category: 'bouquet',
+          imageUrl: 'https://www.thebridalflower.com/wp-content/uploads/2017/09/The-Bridal-Flower-5780-768x768.jpg',
+          image: 'https://www.thebridalflower.com/wp-content/uploads/2017/09/The-Bridal-Flower-5780-768x768.jpg',
+          popularity: 92
+        },
+        {
+          name: 'Elegant Ceremony Arch',
+          description: 'Stunning floral arch for your ceremony backdrop.',
+          price: 299.99,
+          season: 'all-season',
+          color: ['white', 'green'],
+          category: 'ceremony',
+          imageUrl: 'https://i.pinimg.com/736x/10/74/fc/1074fc613d14895c5d2f0714ce64b97d.jpg',
+          image: 'https://i.pinimg.com/736x/10/74/fc/1074fc613d14895c5d2f0714ce64b97d.jpg',
+          popularity: 90
+        }
+      ];
+      
+      await Flower.insertMany(sampleFlowers);
+      console.log('✅ Sample flowers inserted into MongoDB');
+    } else {
+      console.log(`✅ Database already has ${flowerCount} flowers`);
+    }
+  } catch (error) {
+    console.error('❌ Error initializing flower data:', error);
+  }
+};
+
+// Call this function in your app.listen or initializeData function
+app.listen(PORT, async () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Swagger docs available at http://localhost:${PORT}/api-docs`);
+  
+  // Initialize data
+  await initializeFlowerData();
+});
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

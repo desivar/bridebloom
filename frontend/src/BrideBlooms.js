@@ -1,124 +1,176 @@
+// src/components/BrideBlooms.jsx
 import React, { useState, useEffect } from 'react';
-import { Heart, Star, Calendar, MapPin, Phone, Mail, Menu, X, ShoppingCart, User } from 'lucide-react';
-
-// Simulate API call
-export const AuthService = {
-  login: async (credentials) => {
-    // Simulate API delay
-    return new Promise(resolve => {
-      setTimeout(() => {
-        const user = { 
-          token: 'mock-token', 
-          user: { 
-            name: credentials.email.split('@')[0], 
-            email: credentials.email 
-          } 
-        };
-        localStorage.setItem('token', user.token);
-        localStorage.setItem('user', JSON.stringify(user.user));
-        resolve(user);
-      }, 500);
-    });
-  },
-  
-  register: async (userData) => {
-    return { token: 'mock-token', user: { name: userData.name, email: userData.email } };
-  },
-
-  logout: () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-  }
-};
-
-const cartAPI = {
-  getCart: () => {
-    const cart = localStorage.getItem('cart');
-    return cart ? JSON.parse(cart) : [];
-  },
-  addToCart: (item) => {
-    const cart = cartAPI.getCart();
-    const existingItem = cart.find(cartItem => cartItem.id === item.id);
-    if (existingItem) {
-      existingItem.quantity += 1;
-    } else {
-      cart.push({ ...item, quantity: 1 });
-    }
-    localStorage.setItem('cart', JSON.stringify(cart));
-    return cart;
-  },
-  removeFromCart: (itemId) => {
-    const cart = cartAPI.getCart();
-    const updatedCart = cart.filter(item => item.id !== itemId);
-    localStorage.setItem('cart', JSON.stringify(updatedCart));
-    return updatedCart;
-  },
-  clearCart: () => {
-    localStorage.removeItem('cart');
-    return [];
-  },
-  getCartItemCount: () => {
-    const cart = cartAPI.getCart();
-    return cart.reduce((count, item) => count + item.quantity, 0);
-  },
-  getCartTotal: () => {
-    const cart = cartAPI.getCart();
-    return cart.reduce((total, item) => {
-      const price = parseFloat(item.price.replace('$', ''));
-      return total + (price * item.quantity);
-    }, 0);
-  }
-};
-
-const consultationAPI = {
-  schedule: async (data) => {
-    return { success: true, message: 'Consultation scheduled successfully!' };
-  }
-};
+import { Heart, Star, Calendar, MapPin, Phone, Mail, Menu, X, ShoppingCart, User, ChevronRight, Trash2, Plus, Minus } from 'lucide-react';
+import { useAuth } from './context/AuthContext';
+import { useCart } from './context/CartContext';
+import { flowersAPI, consultationAPI } from './api';
 
 const BrideBlooms = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [currentSeason, setCurrentSeason] = useState('spring');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
+  const [flowers, setFlowers] = useState([]);
+  const [filteredFlowers, setFilteredFlowers] = useState([]);
   const [showLogin, setShowLogin] = useState(false);
-  const [cartItems, setCartItems] = useState([]);
+  const [showCart, setShowCart] = useState(false);
+  const [showConsultation, setShowConsultation] = useState(false);
+  const [consultationForm, setConsultationForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    weddingDate: '',
+    message: '',
+    preferredDate: ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [loginError, setLoginError] = useState('');
+  const [registerError, setRegisterError] = useState('');
+  const [loginForm, setLoginForm] = useState({ email: '', password: '' });
+  const [registerForm, setRegisterForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    phone: '',
+    weddingDate: ''
+  });
+  const [isRegister, setIsRegister] = useState(false);
+  
+  const { user, isAuthenticated, login, register, logout, loading: authLoading } = useAuth();
+  const { cartItems, addToCart, removeFromCart, updateQuantity, clearCart, getCartTotal, getItemCount } = useCart();
 
-  // Check login status on component mount
+  // Load flowers on component mount
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-    if (token && userData) {
-      setIsLoggedIn(true);
-      setCurrentUser(JSON.parse(userData));
-    }
-    
-    // Load cart items
-    setCartItems(cartAPI.getCart());
+    loadFlowers();
   }, []);
 
-  // Sample data for flowers by season
-  const flowersBySeasonData = {
-    spring: [
-      { id: 1, name: 'Cherry Blossom Bouquet', price: '$89', image: 'https://i.pinimg.com/originals/3a/bf/ca/3abfcac4c97f8ea9be6ebaff99a696a8.jpg' },
-      { id: 2, name: 'Tulip Paradise', price: '$65', image: 'https://th.bing.com/th/id/R.f4f5a894e331e2b0b1306df7f5d09cce?rik=xNn50e%2f1mu6URg&riu=http%3a%2f%2fwww.himisspuff.com%2fwp-content%2fuploads%2f2017%2f01%2fWhite-tulip-wedding-bouquets.jpg&ehk=fZQt8xwgN3UJEL5O%2ftsY9nlZ2qFtB72d9vGHY%2f0G1HA%3d&risl=&pid=ImgRaw&r=0' },
-      { id: 3, name: 'Daffodil Dreams', price: '$55', image: 'https://www.katherinesflorists.co.uk/wp-content/uploads/2020/03/daffodils-900x1200.jpg' }
-    ],
-    summer: [
-      { id: 4, name: 'Sunflower Splendor', price: '$75', image: 'https://cdn11.bigcommerce.com/s-0023c/images/stencil/1280w/products/2483/7882/IMG20230718114054_002__20230.1689645075.jpg?c=2' },
-      { id: 5, name: 'Peony Perfection', price: '$95', image: 'https://th.bing.com/th/id/R.8b8e78c05ffc5d277a86eb41253d6f00?rik=C38d9T6ag9etKg&riu=http%3a%2f%2fassets.marthastewartweddings.com%2fstyles%2fwmax-520-highdpi%2fd44%2fmemree-rich-wedding-bouquet-234-6257086-0217%2fmemree-rich-wedding-bouquet-234-6257086-0217_vert.jpg%3fitok%3dpE7WLQko&ehk=f2gwG8rz%2bHp2gZztlCSIX9qBQPxsw%2bOQZT97nGvQuKs%3d&risl=&pid=ImgRaw&r=0' },
-      { id: 6, name: 'Lavender Love', price: '$70', image: 'https://i5.walmartimages.com/seo/Ludlz-Artificial-Lavender-Plant-Silk-Flowers-Wedding-Decor-Table-Centerpieces-1Pc-Flower-Garden-DIY-Party-Home-Craft_488c866c-6391-4305-ac63-5860e99f349f.c4fdce3aac39fddd73fe164d964e4bff.jpeg?odnHeight=640&odnWidth=640&odnBg=FFFFFF' }
-    ],
-    fall: [
-      { id: 7, name: 'Autumn Elegance', price: '$85', image: 'https://s-media-cache-ak0.pinimg.com/736x/ac/0c/18/ac0c1831e5627b38773ca68d8c995593.jpg' },
-      { id: 8, name: 'Mum Magnificence', price: '$60', image: 'https://th.bing.com/th/id/OIP.BfGN0IKQ7EfmOyVyKdZRmwHaLH?rs=1&pid=ImgDetMain&cb=idpwebpc2' },
-      { id: 9, name: 'Dahlia Delight', price: '$80', image: 'https://i.pinimg.com/originals/bb/62/96/bb629605ff6d55a6df63fe8d89eae66c.jpg' }
-    ],
-    winter: [
-      { id: 10, name: 'Winter White Wonder', price: '$99', image: 'https://www.thebridalflower.com/wp-content/uploads/2017/09/The-Bridal-Flower-5780-768x768.jpg' },
-      { id: 11, name: 'Evergreen Elegance', price: '$110', image: 'https://www.loveyouwedding.com/wp-content/uploads/2021/03/306-large-round-white-flowers-and-strings-of-green-leaves.jpg' },
-      { id: 12, name: 'Poinsettia Paradise', price: '$65', image: 'https://i.pinimg.com/originals/24/94/70/249470c8ffddf27ea875439e7dd056c2.jpg' }
-    ]
+  // Filter flowers by season
+  useEffect(() => {
+    if (flowers.length > 0) {
+      const filtered = flowers.filter(flower => 
+        flower.season === currentSeason || flower.season === 'all-season'
+      );
+      setFilteredFlowers(filtered);
+    }
+  }, [currentSeason, flowers]);
+
+  const loadFlowers = async () => {
+    try {
+      setLoading(true);
+      const data = await flowersAPI.getBySeason(currentSeason);
+      setFlowers(data);
+    } catch (error) {
+      console.error('Error loading flowers:', error);
+      // Fallback to sample data
+      setFlowers(getSampleFlowers());
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddToCart = (flower) => {
+    if (!isAuthenticated) {
+      setShowLogin(true);
+      return;
+    }
+    
+    addToCart(flower);
+    alert(`${flower.name} added to cart!`);
+  };
+
+  const handleRemoveFromCart = (itemId) => {
+    removeFromCart(itemId);
+  };
+
+  const handleClearCart = () => {
+    if (window.confirm('Are you sure you want to clear your cart?')) {
+      clearCart();
+    }
+  };
+
+  const handleScheduleConsultation = async (e) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      const consultationData = {
+        ...consultationForm,
+        userId: isAuthenticated ? user._id : null
+      };
+      
+      await consultationAPI.schedule(consultationData);
+      
+      alert('Consultation scheduled successfully! We will contact you soon.');
+      setShowConsultation(false);
+      setConsultationForm({
+        name: '',
+        email: '',
+        phone: '',
+        weddingDate: '',
+        message: '',
+        preferredDate: ''
+      });
+    } catch (error) {
+      console.error('Error scheduling consultation:', error);
+      alert('Failed to schedule consultation. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBrowseCollections = () => {
+    document.getElementById('seasons').scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleLoginSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setLoginError('');
+      await login(loginForm.email, loginForm.password);
+      setShowLogin(false);
+      setLoginForm({ email: '', password: '' });
+    } catch (error) {
+      setLoginError(error.message || 'Login failed');
+    }
+  };
+
+  const handleRegisterSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setRegisterError('');
+      await register(registerForm);
+      setShowLogin(false);
+      setRegisterForm({
+        name: '',
+        email: '',
+        password: '',
+        phone: '',
+        weddingDate: ''
+      });
+      setIsRegister(false);
+    } catch (error) {
+      setRegisterError(error.message || 'Registration failed');
+    }
+  };
+
+  const getSampleFlowers = () => {
+    return [
+      {
+        _id: '1',
+        name: 'Romantic Rose Bouquet',
+        description: 'Classic red roses perfect for any season',
+        price: 89.99,
+        season: 'all-season',
+        category: 'bouquet',
+        imageUrl: 'https://img.freepik.com/premium-psd/red-roses-wedding-arrangement_176841-58423.jpg'
+      },
+      {
+        _id: '2',
+        name: 'Spring Tulip Centerpiece',
+        description: 'Vibrant tulips for spring celebrations',
+        price: 65.99,
+        season: 'spring',
+        category: 'centerpiece',
+        imageUrl: 'https://th.bing.com/th/id/OIP.-mjdzxOQeE5rVwmeoGynUwAAAA?rs=1&pid=ImgDetMain&cb=idpwebpc2'
+      }
+    ];
   };
 
   const testimonials = [
@@ -142,133 +194,289 @@ const BrideBlooms = () => {
     }
   ];
 
-  useEffect(() => {
-    const seasons = ['spring', 'summer', 'fall', 'winter'];
-    const interval = setInterval(() => {
-      setCurrentSeason(prev => {
-        const currentIndex = seasons.indexOf(prev);
-        return seasons[(currentIndex + 1) % seasons.length];
-      });
-    }, 4000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Login and logout functions
-  const handleLogin = async (credentials) => {
-    try {
-      const result = await AuthService.login(credentials);
-      setIsLoggedIn(true);
-      setCurrentUser(result.user);
-      setShowLogin(false);
-    } catch (error) {
-      console.error('Login failed:', error);
-    }
-  };
-
-  const handleLogout = () => {
-    AuthService.logout();
-    setIsLoggedIn(false);
-    setCurrentUser(null);
-  };
-
-  const handleAddToCart = (item) => {
-    const updatedCart = cartAPI.addToCart(item);
-    setCartItems(updatedCart);
-  };
-
   const LoginModal = ({ isOpen, onClose }) => {
-    const [isLogin, setIsLogin] = useState(true);
-    const [formData, setFormData] = useState({
-      name: '',
-      email: '',
-      password: '',
-      weddingDate: ''
-    });
-    
     if (!isOpen) return null;
 
-    const handleSubmit = async (e) => {
-      e.preventDefault();
-      if (isLogin) {
-        await handleLogin({ email: formData.email, password: formData.password });
+    const handleSubmit = (e) => {
+      if (isRegister) {
+        handleRegisterSubmit(e);
       } else {
-        // Handle registration
-        await AuthService.register(formData);
-        await handleLogin({ email: formData.email, password: formData.password });
+        handleLoginSubmit(e);
       }
     };
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl max-w-md w-full p-8 relative">
-          <button 
-            onClick={onClose}
-            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-          >
+          <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
             <X size={24} />
           </button>
           
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-gray-800 mb-2">
-              {isLogin ? 'Welcome Back' : 'Join Us'}
+              {isRegister ? 'Join Us' : 'Welcome Back'}
             </h2>
             <p className="text-gray-600">
-              {isLogin ? 'Sign in to your account' : 'Create your account'}
+              {isRegister ? 'Create your account' : 'Sign in to your account'}
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {!isLogin && (
+            {isRegister && (
               <input
                 type="text"
                 placeholder="Full Name"
-                value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                value={registerForm.name}
+                onChange={(e) => setRegisterForm({...registerForm, name: e.target.value})}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                required
               />
             )}
+            
             <input
               type="email"
               placeholder="Email Address"
-              value={formData.email}
-              onChange={(e) => setFormData({...formData, email: e.target.value})}
+              value={isRegister ? registerForm.email : loginForm.email}
+              onChange={(e) => isRegister 
+                ? setRegisterForm({...registerForm, email: e.target.value})
+                : setLoginForm({...loginForm, email: e.target.value})
+              }
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
               required
             />
+            
             <input
               type="password"
               placeholder="Password"
-              value={formData.password}
-              onChange={(e) => setFormData({...formData, password: e.target.value})}
+              value={isRegister ? registerForm.password : loginForm.password}
+              onChange={(e) => isRegister
+                ? setRegisterForm({...registerForm, password: e.target.value})
+                : setLoginForm({...loginForm, password: e.target.value})
+              }
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
               required
             />
-            {!isLogin && (
-              <input
-                type="date"
-                placeholder="Wedding Date"
-                value={formData.weddingDate}
-                onChange={(e) => setFormData({...formData, weddingDate: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-              />
+            
+            {isRegister && (
+              <>
+                <input
+                  type="tel"
+                  placeholder="Phone Number (Optional)"
+                  value={registerForm.phone}
+                  onChange={(e) => setRegisterForm({...registerForm, phone: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                />
+                <input
+                  type="date"
+                  placeholder="Wedding Date"
+                  value={registerForm.weddingDate}
+                  onChange={(e) => setRegisterForm({...registerForm, weddingDate: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                />
+              </>
             )}
             
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white py-3 rounded-lg font-semibold hover:from-pink-600 hover:to-rose-600 transition-all"
+              disabled={authLoading || loading}
+              className="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white py-3 rounded-lg font-semibold hover:from-pink-600 hover:to-rose-600 transition-all disabled:opacity-50"
             >
-              {isLogin ? 'Sign In' : 'Create Account'}
+              {authLoading || loading ? 'Please wait...' : (isRegister ? 'Create Account' : 'Sign In')}
             </button>
+            
+            {(loginError || registerError) && (
+              <p className="text-red-500 text-center">
+                {isRegister ? registerError : loginError}
+              </p>
+            )}
           </form>
 
           <div className="text-center mt-6">
             <button
-              onClick={() => setIsLogin(!isLogin)}
+              onClick={() => {
+                setIsRegister(!isRegister);
+                setLoginError('');
+                setRegisterError('');
+              }}
               className="text-pink-500 hover:text-pink-600 font-medium"
             >
-              {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+              {isRegister ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
             </button>
           </div>
+        </div>
+      </div>
+    );
+  };
+
+  const CartModal = ({ isOpen, onClose }) => {
+    if (!isOpen) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col">
+          <div className="flex justify-between items-center p-6 border-b">
+            <h2 className="text-2xl font-bold text-gray-800">Shopping Cart</h2>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+              <X size={24} />
+            </button>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto p-6">
+            {cartItems.length === 0 ? (
+              <div className="text-center py-8">
+                <ShoppingCart size={64} className="mx-auto text-gray-300 mb-4" />
+                <p className="text-gray-600">Your cart is empty</p>
+                <button 
+                  onClick={() => {
+                    onClose();
+                    handleBrowseCollections();
+                  }}
+                  className="mt-4 text-pink-600 hover:text-pink-800 font-medium"
+                >
+                  Browse Collections
+                </button>
+              </div>
+            ) : (
+              <>
+                {cartItems.map((item) => (
+                  <div key={item.id} className="flex items-center py-4 border-b">
+                    <img 
+                      src={item.image || 'https://via.placeholder.com/80'} 
+                      alt={item.name} 
+                      className="w-20 h-20 object-cover rounded-lg" 
+                    />
+                    <div className="ml-4 flex-1">
+                      <h3 className="font-semibold text-gray-800">{item.name}</h3>
+                      <p className="text-pink-600 font-bold">${item.price.toFixed(2)} × {item.quantity}</p>
+                      <div className="flex items-center mt-2">
+                        <button 
+                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          className="px-2 py-1 border rounded-l hover:bg-gray-50"
+                        >
+                          <Minus size={14} />
+                        </button>
+                        <span className="px-4 py-1 border-t border-b">{item.quantity}</span>
+                        <button 
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          className="px-2 py-1 border rounded-r hover:bg-gray-50"
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => handleRemoveFromCart(item.id)}
+                      className="text-red-500 hover:text-red-700 ml-4 p-2 hover:bg-red-50 rounded-full"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                ))}
+                
+                <div className="mt-6 pt-6 border-t">
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="text-lg font-semibold">Total:</span>
+                    <span className="text-2xl font-bold text-pink-600">${getCartTotal().toFixed(2)}</span>
+                  </div>
+                  
+                  <div className="flex gap-4">
+                    <button
+                      onClick={handleClearCart}
+                      className="flex-1 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      Clear Cart
+                    </button>
+                    <button
+                      className="flex-1 bg-gradient-to-r from-pink-500 to-rose-500 text-white py-3 rounded-lg font-semibold hover:from-pink-600 hover:to-rose-600 transition-all"
+                    >
+                      Checkout
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const ConsultationModal = ({ isOpen, onClose }) => {
+    if (!isOpen) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl max-w-md w-full p-8 relative">
+          <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+            <X size={24} />
+          </button>
+          
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-800 mb-2">Schedule a Consultation</h2>
+            <p className="text-gray-600">Let's discuss your dream wedding flowers</p>
+          </div>
+
+          <form onSubmit={handleScheduleConsultation} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <input
+                type="text"
+                placeholder="Your Name"
+                value={consultationForm.name}
+                onChange={(e) => setConsultationForm({...consultationForm, name: e.target.value})}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                required
+              />
+              <input
+                type="email"
+                placeholder="Your Email"
+                value={consultationForm.email}
+                onChange={(e) => setConsultationForm({...consultationForm, email: e.target.value})}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                required
+              />
+            </div>
+            
+            <input
+              type="tel"
+              placeholder="Phone Number"
+              value={consultationForm.phone}
+              onChange={(e) => setConsultationForm({...consultationForm, phone: e.target.value})}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+            />
+            
+            <input
+              type="date"
+              placeholder="Wedding Date"
+              value={consultationForm.weddingDate}
+              onChange={(e) => setConsultationForm({...consultationForm, weddingDate: e.target.value})}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+              required
+            />
+            
+            <input
+              type="date"
+              placeholder="Preferred Consultation Date"
+              value={consultationForm.preferredDate}
+              onChange={(e) => setConsultationForm({...consultationForm, preferredDate: e.target.value})}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+            />
+            
+            <textarea
+              rows={4}
+              placeholder="Tell us about your dream wedding..."
+              value={consultationForm.message}
+              onChange={(e) => setConsultationForm({...consultationForm, message: e.target.value})}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+            ></textarea>
+            
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white py-3 rounded-lg font-semibold hover:from-pink-600 hover:to-rose-600 transition-all disabled:opacity-50"
+            >
+              {loading ? 'Scheduling...' : 'Schedule Consultation'}
+            </button>
+          </form>
         </div>
       </div>
     );
@@ -290,22 +498,29 @@ const BrideBlooms = () => {
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8">
               <a href="#home" className="text-gray-700 hover:text-pink-600 transition-colors">Home</a>
-              <a href="#flowers" className="text-gray-700 hover:text-pink-600 transition-colors">Flowers</a>
-              <a href="#seasons" className="text-gray-700 hover:text-pink-600 transition-colors">4 Seasons</a>
+              <a href="#seasons" className="text-gray-700 hover:text-pink-600 transition-colors">Collections</a>
               <a href="#testimonials" className="text-gray-700 hover:text-pink-600 transition-colors">Reviews</a>
               <a href="#contact" className="text-gray-700 hover:text-pink-600 transition-colors">Contact</a>
               
-              {/* Shopping Cart Icon */}
-              <button className="text-gray-700 hover:text-pink-600 transition-colors">
+              {/* Shopping Cart with badge */}
+              <button 
+                onClick={() => setShowCart(true)}
+                className="text-gray-700 hover:text-pink-600 transition-colors relative"
+              >
                 <ShoppingCart size={20} />
+                {getItemCount() > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-pink-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {getItemCount()}
+                  </span>
+                )}
               </button>
               
-              {/* SIGN IN BUTTON with Icon */}
-              {isLoggedIn ? (
+              {/* Sign In / User Profile Button */}
+              {isAuthenticated ? (
                 <div className="flex items-center space-x-4">
-                  <span className="text-sm text-gray-700">Hi, {currentUser?.name || 'User'}!</span>
+                  <span className="text-sm text-gray-700">Hi, {user?.name || 'User'}!</span>
                   <button 
-                    onClick={handleLogout}
+                    onClick={logout}
                     className="flex items-center text-pink-600 hover:text-pink-800 transition-colors"
                   >
                     <User size={20} className="mr-1" />
@@ -338,19 +553,28 @@ const BrideBlooms = () => {
           <div className="md:hidden bg-white shadow-lg">
             <div className="px-2 pt-2 pb-3 space-y-1">
               <a href="#home" className="block px-3 py-2 text-gray-700">Home</a>
-              <a href="#flowers" className="block px-3 py-2 text-gray-700">Flowers</a>
-              <a href="#seasons" className="block px-3 py-2 text-gray-700">4 Seasons</a>
+              <a href="#seasons" className="block px-3 py-2 text-gray-700">Collections</a>
               <a href="#testimonials" className="block px-3 py-2 text-gray-700">Reviews</a>
               <a href="#contact" className="block px-3 py-2 text-gray-700">Contact</a>
               
-              {/* Mobile Sign In Button */}
-              <div className="px-3 py-2">
-                {isLoggedIn ? (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-700">Hi, {currentUser?.name || 'User'}!</span>
+              <div className="px-3 py-2 border-t">
+                <button 
+                  onClick={() => {
+                    setShowCart(true);
+                    setIsMenuOpen(false);
+                  }}
+                  className="flex items-center w-full text-gray-700 hover:text-pink-600 py-2"
+                >
+                  <ShoppingCart size={20} className="mr-2" />
+                  Cart {getItemCount() > 0 && `(${getItemCount()})`}
+                </button>
+                
+                {isAuthenticated ? (
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-sm text-gray-700">Hi, {user?.name || 'User'}!</span>
                     <button 
-                      onClick={handleLogout}
-                      className="flex items-center text-pink-600 hover:text-pink-800 transition-colors"
+                      onClick={logout}
+                      className="flex items-center text-pink-600 hover:text-pink-800"
                     >
                       <User size={20} className="mr-1" />
                       Logout
@@ -362,7 +586,7 @@ const BrideBlooms = () => {
                       setShowLogin(true);
                       setIsMenuOpen(false);
                     }}
-                    className="flex items-center w-full text-pink-600 hover:text-pink-800 transition-colors"
+                    className="flex items-center w-full text-pink-600 hover:text-pink-800 py-2"
                   >
                     <User size={20} className="mr-2" />
                     Sign In
@@ -385,110 +609,126 @@ const BrideBlooms = () => {
         ></div>
         
         <div className="relative z-10 text-center text-white max-w-4xl mx-auto px-4">
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 animate-fade-in">
+          <h1 className="text-5xl md:text-7xl font-bold mb-6">
             Your Dream Wedding
-            <span className="block bg-gradient-to-r from-black-30 to-blue-300 bg-clip-text text-transparent">
+            <span className="block bg-gradient-to-r from-white to-pink-100 bg-clip-text text-transparent">
               Blooms Here
             </span>
           </h1>
-          <p className="text-xl md:text-2xl mb-8 text-white max-w-2xl mx-auto" style={{textShadow: '2px 2px 4px rgba(0,0,0,0.8)'}}>
+          <p className="text-xl md:text-2xl mb-8 max-w-2xl mx-auto" style={{textShadow: '2px 2px 4px rgba(0,0,0,0.8)'}}>
             Perfect flowers for every season, guaranteed fresh and beautiful for your special day, 
             no matter the weather
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="bg-gradient-to-r from-pink-500 to-rose-500 text-white px-8 py-4 rounded-full text-lg font-semibold hover:from-pink-600 hover:to-rose-600 transform hover:scale-105 transition-all shadow-xl">
+            <button 
+              onClick={handleBrowseCollections}
+              className="bg-gradient-to-r from-pink-500 to-rose-500 text-white px-8 py-4 rounded-full text-lg font-semibold hover:from-pink-600 hover:to-rose-600 transform hover:scale-105 transition-all shadow-xl"
+            >
               Browse Collections
             </button>
-            <button className="bg-white/20 backdrop-blur-md text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-white/30 transition-all border border-white/30">
+            <button 
+              onClick={() => setShowConsultation(true)}
+              className="bg-white/20 backdrop-blur-md text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-white/30 transition-all border border-white/30"
+            >
               Schedule Consultation
             </button>
           </div>
         </div>
       </section>
 
-      {/* 4 Seasons Guarantee */}
+      {/* Collections Section */}
       <section id="seasons" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6">
-              Perfect Flowers, 
-              <span className="bg-gradient-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent">
-                Every Season
-              </span>
+              Seasonal Collections
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Our 4-season guarantee ensures you get the most beautiful, fresh flowers 
-              regardless of weather conditions or seasonal availability
+              Browse our curated collections for every season
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
-            {['spring', 'summer', 'fall', 'winter'].map((season, index) => (
-              <div 
+          {/* Season Selector */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            {['spring', 'summer', 'fall', 'winter'].map((season) => (
+              <button
                 key={season}
-                className={`relative rounded-2xl p-6 text-center transform transition-all duration-500 cursor-pointer ${
-                  currentSeason === season 
-                    ? 'scale-105 shadow-2xl' 
-                    : 'hover:scale-105 shadow-lg'
-                } ${
-                  season === 'spring' ? 'bg-gradient-to-br from-green-100 to-pink-100' :
-                  season === 'summer' ? 'bg-gradient-to-br from-yellow-100 to-orange-100' :
-                  season === 'fall' ? 'bg-gradient-to-br from-orange-100 to-red-100' :
-                  'bg-gradient-to-br from-blue-100 to-purple-100'
+                onClick={() => {
+                  setCurrentSeason(season);
+                  loadFlowers();
+                }}
+                className={`p-4 rounded-xl text-center capitalize transition-all ${
+                  currentSeason === season
+                    ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-lg'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
-                onClick={() => setCurrentSeason(season)}
               >
-                <div className="text-4xl mb-4">
+                <div className="text-2xl mb-2">
                   {season === 'spring' ? '🌸' : 
                    season === 'summer' ? '🌻' : 
                    season === 'fall' ? '🍂' : '❄️'}
                 </div>
-                <h3 className="text-2xl font-bold capitalize mb-2 text-gray-800">{season}</h3>
-                <p className="text-gray-600">
-                  {season === 'spring' ? 'Fresh blooms and delicate pastels' :
-                   season === 'summer' ? 'Vibrant colors and bold arrangements' :
-                   season === 'fall' ? 'Warm tones and rustic elegance' :
-                   'Classic whites and winter wonderland'}
-                </p>
-                {currentSeason === season && (
-                  <div className="absolute -top-2 -right-2 bg-pink-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
-                    ✓
-                  </div>
-                )}
-              </div>
+                <span className="font-semibold">{season}</span>
+              </button>
             ))}
           </div>
 
-          {/* Dynamic Flower Display */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {flowersBySeasonData[currentSeason].map((flower) => (
-              <div key={flower.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all group">
-                <div className="relative overflow-hidden">
-                  <img 
-                    src={flower.image} 
-                    alt={flower.name}
-                    className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all"></div>
-                  <button className="absolute top-4 right-4 bg-white/80 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 transition-all">
-                    <Heart size={20} className="text-pink-500" />
-                  </button>
-                </div>
-                <div className="p-6">
-                  <h3 className="text-xl font-bold text-gray-800 mb-2">{flower.name}</h3>
-                  <div className="flex justify-between items-center">
-                    <span className="text-2xl font-bold text-pink-600">{flower.price}</span>
-                    <button 
-                      onClick={() => handleAddToCart(flower)}
-                      className="bg-gradient-to-r from-pink-500 to-rose-500 text-white px-4 py-2 rounded-full hover:from-pink-600 hover:to-rose-600 transition-all"
-                    >
-                      Add to Cart
-                    </button>
+          {/* Flower Grid */}
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-pink-500"></div>
+              <p className="mt-4 text-gray-600">Loading flowers...</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredFlowers.map((flower) => (
+                <div key={flower._id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all group border border-gray-100">
+                  <div className="relative overflow-hidden h-64">
+                    <img 
+                      src={flower.imageUrl || flower.image} 
+                      alt={flower.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div className="absolute top-4 right-4">
+                      <button className="bg-white/90 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 transition-all hover:bg-white">
+                        <Heart size={20} className="text-pink-500" />
+                      </button>
+                    </div>
+                    <div className="absolute bottom-4 left-4">
+                      <span className="bg-pink-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                        {flower.season}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="p-6">
+                    <h3 className="text-xl font-bold text-gray-800 mb-2">{flower.name}</h3>
+                    <p className="text-gray-600 mb-4 line-clamp-2">{flower.description}</p>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <span className="text-2xl font-bold text-pink-600">${flower.price.toFixed(2)}</span>
+                        <span className="text-gray-500 text-sm ml-2">{flower.category}</span>
+                      </div>
+                      <button 
+                        onClick={() => handleAddToCart(flower)}
+                        disabled={loading}
+                        className="bg-gradient-to-r from-pink-500 to-rose-500 text-white px-4 py-2 rounded-full hover:from-pink-600 hover:to-rose-600 transition-all disabled:opacity-50 flex items-center"
+                      >
+                        <ShoppingCart size={16} className="mr-2" />
+                        Add to Cart
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
+
+          {!loading && filteredFlowers.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-gray-600">No flowers found for this season. Check back soon!</p>
+            </div>
+          )}
         </div>
       </section>
 
@@ -600,9 +840,19 @@ const BrideBlooms = () => {
                   <span className="text-lg">123 Flower Street, Bloom City, BC 12345</span>
                 </div>
               </div>
+              
+              <div className="mt-12">
+                <button 
+                  onClick={() => setShowConsultation(true)}
+                  className="bg-white text-pink-600 px-8 py-4 rounded-full text-lg font-semibold hover:bg-pink-50 transition-all shadow-lg"
+                >
+                  Schedule Free Consultation
+                </button>
+              </div>
             </div>
 
             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8">
+              <h3 className="text-2xl font-bold mb-6">Send us a Message</h3>
               <form className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <input
@@ -616,14 +866,9 @@ const BrideBlooms = () => {
                     className="bg-white/20 border border-white/30 rounded-lg px-4 py-3 text-white placeholder-pink-200 focus:ring-2 focus:ring-white/50 focus:border-transparent"
                   />
                 </div>
-                <input
-                  type="date"
-                  placeholder="Wedding Date"
-                  className="w-full bg-white/20 border border-white/30 rounded-lg px-4 py-3 text-white placeholder-pink-200 focus:ring-2 focus:ring-white/50 focus:border-transparent"
-                />
                 <textarea
                   rows={4}
-                  placeholder="Tell us about your dream wedding..."
+                  placeholder="How can we help you?"
                   className="w-full bg-white/20 border border-white/30 rounded-lg px-4 py-3 text-white placeholder-pink-200 focus:ring-2 focus:ring-white/50 focus:border-transparent"
                 ></textarea>
                 <button
@@ -686,13 +931,15 @@ const BrideBlooms = () => {
           </div>
           
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 Bride Blooms. All rights reserved. Making dreams bloom in every season. |Desire Vargas</p>
+            <p>&copy; 2025 Bride Blooms. All rights reserved. Making dreams bloom in every season.</p>
           </div>
         </div>
       </footer>
 
-      {/* Login Modal */}
+      {/* Modals */}
       <LoginModal isOpen={showLogin} onClose={() => setShowLogin(false)} />
+      <CartModal isOpen={showCart} onClose={() => setShowCart(false)} />
+      <ConsultationModal isOpen={showConsultation} onClose={() => setShowConsultation(false)} />
     </div>
   );
 };
