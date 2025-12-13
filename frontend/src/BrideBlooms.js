@@ -42,7 +42,7 @@ const BrideBlooms = () => {
     loadFlowers();
   }, []);
 
-  // Filter flowers by season
+  // Filter flowers by season when currentSeason or flowers change
   useEffect(() => {
     if (flowers.length > 0) {
       const filtered = flowers.filter(flower => 
@@ -55,12 +55,21 @@ const BrideBlooms = () => {
   const loadFlowers = async () => {
     try {
       setLoading(true);
-      const data = await flowersAPI.getBySeason(currentSeason);
-      setFlowers(data);
+      
+      // Direct API call to fetch all flowers
+      const response = await fetch('http://localhost:5000/api/flowers');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setFlowers(data); // Store all 12 flowers in state
+      
     } catch (error) {
-      console.error('Error loading flowers:', error);
-      // Fallback to sample data
-      setFlowers(getSampleFlowers());
+      console.error('Error loading flowers from API:', error);
+      // Fallback: Only use sample data if the API connection fails completely
+      setFlowers(getSampleFlowers()); 
     } finally {
       setLoading(false);
     }
@@ -653,10 +662,7 @@ const BrideBlooms = () => {
             {['spring', 'summer', 'fall', 'winter'].map((season) => (
               <button
                 key={season}
-                onClick={() => {
-                  setCurrentSeason(season);
-                  loadFlowers();
-                }}
+                onClick={() => setCurrentSeason(season)}
                 className={`p-4 rounded-xl text-center capitalize transition-all ${
                   currentSeason === season
                     ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-lg'
