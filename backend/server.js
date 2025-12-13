@@ -1,3 +1,4 @@
+// server.js (your backend file)
 const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
@@ -61,6 +62,7 @@ const FlowerSchema = new mongoose.Schema({
   color: [String],
   category: { type: String, enum: ['bouquet', 'centerpiece', 'ceremony', 'boutonniere'], required: true },
   imageUrl: String,
+  image: String, // Add this for compatibility
   inStock: { type: Boolean, default: true },
   popularity: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now }
@@ -90,10 +92,43 @@ const ReviewSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
+// Add Cart and Consultation schemas
+const CartSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  items: [{
+    flowerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Flower', required: true },
+    quantity: { type: Number, required: true, min: 1, default: 1 },
+    price: { type: Number, required: true },
+    name: { type: String, required: true },
+    image: { type: String, required: true }
+  }],
+  total: { type: Number, default: 0 },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+const ConsultationSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  name: { type: String, required: true },
+  email: { type: String, required: true },
+  phone: String,
+  weddingDate: { type: Date, required: true },
+  message: String,
+  preferredDate: Date,
+  status: { 
+    type: String, 
+    enum: ['pending', 'scheduled', 'completed', 'cancelled'], 
+    default: 'pending' 
+  },
+  createdAt: { type: Date, default: Date.now }
+});
+
 const User = mongoose.model('User', UserSchema);
 const Flower = mongoose.model('Flower', FlowerSchema);
 const Order = mongoose.model('Order', OrderSchema);
 const Review = mongoose.model('Review', ReviewSchema);
+const Cart = mongoose.model('Cart', CartSchema);
+const Consultation = mongoose.model('Consultation', ConsultationSchema);
 
 // Middleware for authentication
 const authenticateToken = (req, res, next) => {
@@ -220,6 +255,46 @@ app.post('/api/auth/login', async (req, res) => {
 
 /**
  * @swagger
+ * /api/auth/me:
+ *   get:
+ *     summary: Get current user info
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Current user information
+ */
+app.get('/api/auth/me', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json({ user });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/auth/logout:
+ *   post:
+ *     summary: Logout user
+ *     tags: [Authentication]
+ *     responses:
+ *       200:
+ *         description: Logout successful
+ */
+app.post('/api/auth/logout', (req, res) => {
+  res.json({ message: 'Logout successful' });
+});
+
+// ========== FLOWER ENDPOINTS ==========
+
+/**
+ * @swagger
  * /api/flowers:
  *   get:
  *     summary: Get all flowers
@@ -248,6 +323,55 @@ app.get('/api/flowers', async (req, res) => {
     if (category) filter.category = category;
     
     const flowers = await Flower.find(filter);
+    res.json(flowers);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/flowers/{id}:
+ *   get:
+ *     summary: Get a single flower by ID
+ *     tags: [Flowers]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Flower details
+ *       404:
+ *         description: Flower not found
+ */
+app.get('/api/flowers/:id', async (req, res) => {
+  try {
+    const flower = await Flower.findById(req.params.id);
+    if (!flower) {
+      return res.status(404).json({ message: 'Flower not found' });
+    }
+    res.json(flower);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/flowers/popular:
+ *   get:
+ *     summary: Get popular flowers
+ *     tags: [Flowers]
+ *     responses:
+ *       200:
+ *         description: List of popular flowers
+ */
+app.get('/api/flowers/popular', async (req, res) => {
+  try {
+    const flowers = await Flower.find().sort({ popularity: -1 }).limit(10);
     res.json(flowers);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -292,6 +416,246 @@ app.post('/api/flowers', authenticateToken, async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
+// ========== CART ENDPOINTS ==========
+
+/**
+ * @swagger
+ * /api/cart:
+ *   get:
+ *     summary: Get user's cart
+ *     tags: [Cart]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User's cart items
+ */
+app.get('/api/cart', authenticateToken, async (req, res) => {
+  try {
+    let cart = await Cart.findOne({ userId: req.user.userId }).populate('items.flowerId');
+    
+    if (!cart) {
+      cart = new Cart({ userId: req.user.userId, items: [] });
+      await cart.save();
+    }
+    
+    res.json(cart);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/cart:
+ *   post:
+ *     summary: Add item to cart
+ *     tags: [Cart]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               flowerId:
+ *                 type: string
+ *               quantity:
+ *                 type: number
+ *     responses:
+ *       200:
+ *         description: Item added to cart
+ */
+app.post('/api/cart', authenticateToken, async (req, res) => {
+  try {
+    const { flowerId, quantity = 1 } = req.body;
+    
+    // Get flower details
+    const flower = await Flower.findById(flowerId);
+    if (!flower) {
+      return res.status(404).json({ message: 'Flower not found' });
+    }
+    
+    let cart = await Cart.findOne({ userId: req.user.userId });
+    
+    if (!cart) {
+      cart = new Cart({ userId: req.user.userId, items: [] });
+    }
+    
+    // Check if item already exists in cart
+    const existingItemIndex = cart.items.findIndex(item => 
+      item.flowerId.toString() === flowerId
+    );
+    
+    if (existingItemIndex > -1) {
+      // Update quantity
+      cart.items[existingItemIndex].quantity += quantity;
+    } else {
+      // Add new item
+      cart.items.push({
+        flowerId,
+        quantity,
+        price: flower.price,
+        name: flower.name,
+        image: flower.image || flower.imageUrl
+      });
+    }
+    
+    // Calculate total
+    cart.total = cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    cart.updatedAt = new Date();
+    
+    await cart.save();
+    res.json(cart);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/cart/{itemId}:
+ *   delete:
+ *     summary: Remove item from cart
+ *     tags: [Cart]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: itemId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Item removed from cart
+ */
+app.delete('/api/cart/:itemId', authenticateToken, async (req, res) => {
+  try {
+    const cart = await Cart.findOne({ userId: req.user.userId });
+    
+    if (!cart) {
+      return res.status(404).json({ message: 'Cart not found' });
+    }
+    
+    cart.items = cart.items.filter(item => item._id.toString() !== req.params.itemId);
+    cart.total = cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    cart.updatedAt = new Date();
+    
+    await cart.save();
+    res.json(cart);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/cart:
+ *   delete:
+ *     summary: Clear cart
+ *     tags: [Cart]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Cart cleared
+ */
+app.delete('/api/cart', authenticateToken, async (req, res) => {
+  try {
+    const cart = await Cart.findOne({ userId: req.user.userId });
+    
+    if (!cart) {
+      return res.status(404).json({ message: 'Cart not found' });
+    }
+    
+    cart.items = [];
+    cart.total = 0;
+    cart.updatedAt = new Date();
+    
+    await cart.save();
+    res.json(cart);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ========== CONSULTATION ENDPOINTS ==========
+
+/**
+ * @swagger
+ * /api/consultations:
+ *   post:
+ *     summary: Schedule a consultation
+ *     tags: [Consultations]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               weddingDate:
+ *                 type: string
+ *                 format: date
+ *               message:
+ *                 type: string
+ *               preferredDate:
+ *                 type: string
+ *                 format: date
+ *     responses:
+ *       201:
+ *         description: Consultation scheduled successfully
+ */
+app.post('/api/consultations', async (req, res) => {
+  try {
+    const consultation = new Consultation(req.body);
+    await consultation.save();
+    res.status(201).json(consultation);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/consultations:
+ *   get:
+ *     summary: Get all consultations (admin) or user's consultations
+ *     tags: [Consultations]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of consultations
+ */
+app.get('/api/consultations', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    
+    let consultations;
+    if (user.role === 'admin') {
+      consultations = await Consultation.find().populate('userId', 'name email');
+    } else {
+      consultations = await Consultation.find({ userId: req.user.userId });
+    }
+    
+    res.json(consultations);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ========== ORDER ENDPOINTS ==========
 
 /**
  * @swagger
@@ -340,6 +704,31 @@ app.get('/api/orders', authenticateToken, async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
+/**
+ * @swagger
+ * /api/orders/history:
+ *   get:
+ *     summary: Get order history
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Order history
+ */
+app.get('/api/orders/history', authenticateToken, async (req, res) => {
+  try {
+    const orders = await Order.find({ customerId: req.user.userId })
+      .populate('items.flowerId')
+      .sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ========== REVIEW ENDPOINTS ==========
 
 /**
  * @swagger
@@ -401,6 +790,7 @@ const initializeData = async () => {
           color: ['red', 'pink'],
           category: 'bouquet',
           imageUrl: 'https://img.freepik.com/premium-psd/red-roses-wedding-arrangement_176841-58423.jpg',
+          image: 'https://img.freepik.com/premium-psd/red-roses-wedding-arrangement_176841-58423.jpg',
           popularity: 95
         },
         {
@@ -411,6 +801,7 @@ const initializeData = async () => {
           color: ['pink', 'yellow', 'purple'],
           category: 'centerpiece',
           imageUrl: 'https://th.bing.com/th/id/OIP.-mjdzxOQeE5rVwmeoGynUwAAAA?rs=1&pid=ImgDetMain&cb=idpwebpc2',
+          image: 'https://th.bing.com/th/id/OIP.-mjdzxOQeE5rVwmeoGynUwAAAA?rs=1&pid=ImgDetMain&cb=idpwebpc2',
           popularity: 85
         },
         {
@@ -421,6 +812,7 @@ const initializeData = async () => {
           color: ['white'],
           category: 'ceremony',
           imageUrl: 'https://i.pinimg.com/736x/10/74/fc/1074fc613d14895c5d2f0714ce64b97d.jpg',
+          image: 'https://i.pinimg.com/736x/10/74/fc/1074fc613d14895c5d2f0714ce64b97d.jpg',
           popularity: 90
         }
       ];
